@@ -25,10 +25,9 @@ export interface QueueEntry {
   driverName: string;
   status: "waiting" | "dispatched";
   arrivalTime: Date;
-  destinationId?: string;   // optional
-  dispatchedAt?: Date;      // optional
+  destinationId?: string;
+  dispatchedAt?: Date;
 }
-
 
 export interface DispatchLog {
   id: string;
@@ -42,4 +41,12 @@ export interface DailyStats {
   peakHour: string;
   mostFrequentDestination: string;
   averageWaitTime: number;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: 'admin' | 'dispatcher';
+  assignedFermatas?: string[];
 }

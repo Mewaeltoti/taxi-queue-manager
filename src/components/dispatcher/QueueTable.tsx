@@ -2,6 +2,7 @@ import { Clock, Car, User, Hash, ArrowRight } from 'lucide-react';
 import { QueueEntry } from '@/types/taxi';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { t } from '@/lib/translations';
 
 interface QueueTableProps {
   entries: QueueEntry[];
@@ -13,15 +14,15 @@ function formatDuration(arrivalTime: Date): string {
   const diffMs = now.getTime() - arrivalTime.getTime();
   const diffMins = Math.floor(diffMs / 60000);
   
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m`;
+  if (diffMins < 1) return t.justNow;
+  if (diffMins < 60) return `${diffMins} ደቒቕ`;
   const hours = Math.floor(diffMins / 60);
   const mins = diffMins % 60;
-  return `${hours}h ${mins}m`;
+  return `${hours} ሰዓት ${mins} ደቒቕ`;
 }
 
 function formatTime(date: Date): string {
-  return date.toLocaleTimeString('en-US', { 
+  return date.toLocaleTimeString('am-ET', { 
     hour: '2-digit', 
     minute: '2-digit',
     hour12: true 
@@ -38,7 +39,7 @@ export function QueueTable({ entries }: QueueTableProps) {
         {waitingEntries.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">
             <Car className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>No taxis in queue</p>
+            <p>{t.noTaxisInQueue}</p>
           </div>
         ) : (
           <div className="divide-y">
@@ -66,7 +67,7 @@ export function QueueTable({ entries }: QueueTableProps) {
                   </div>
                   {index === 0 && (
                     <Badge className="bg-accent text-accent-foreground animate-pulse-subtle">
-                      Next
+                      {t.next}
                     </Badge>
                   )}
                 </div>
@@ -77,7 +78,7 @@ export function QueueTable({ entries }: QueueTableProps) {
                   </span>
                   <span className="flex items-center gap-1.5">
                     <ArrowRight className="h-4 w-4" />
-                    Waiting {formatDuration(entry.arrivalTime)}
+                    {formatDuration(entry.arrivalTime)}
                   </span>
                 </div>
               </div>
@@ -94,32 +95,32 @@ export function QueueTable({ entries }: QueueTableProps) {
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 <div className="flex items-center gap-2">
                   <Hash className="h-4 w-4" />
-                  Queue
+                  {t.queueNumber}
                 </div>
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 <div className="flex items-center gap-2">
                   <Car className="h-4 w-4" />
-                  Plate
+                  {t.plateNumber}
                 </div>
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  Driver
+                  {t.driver}
                 </div>
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
-                  Arrival
+                  {t.arrivalTime}
                 </div>
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Waiting
+                {t.waitingTime}
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Status
+                {t.status}
               </th>
             </tr>
           </thead>
@@ -128,7 +129,7 @@ export function QueueTable({ entries }: QueueTableProps) {
               <tr>
                 <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
                   <Car className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>No taxis in queue</p>
+                  <p>{t.noTaxisInQueue}</p>
                 </td>
               </tr>
             ) : (
@@ -165,10 +166,10 @@ export function QueueTable({ entries }: QueueTableProps) {
                   <td className="px-4 py-4">
                     {index === 0 ? (
                       <Badge className="bg-accent text-accent-foreground animate-pulse-subtle">
-                        Next
+                        {t.next}
                       </Badge>
                     ) : (
-                      <Badge variant="secondary">Waiting</Badge>
+                      <Badge variant="secondary">{t.waiting}</Badge>
                     )}
                   </td>
                 </tr>

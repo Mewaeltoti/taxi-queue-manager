@@ -1,6 +1,7 @@
-import { MapPin } from 'lucide-react';
+import { MapPin, Check } from 'lucide-react';
 import { Fermata } from '@/types/taxi';
 import { cn } from '@/lib/utils';
+import { t } from '@/lib/translations';
 
 interface DestinationSelectorProps {
   destinations: Fermata[];
@@ -13,7 +14,7 @@ export function DestinationSelector({ destinations, selectedId, onSelect }: Dest
     <div className="bg-card rounded-xl border p-4 lg:p-5">
       <div className="flex items-center gap-2 mb-4">
         <MapPin className="h-5 w-5 text-accent" />
-        <h3 className="font-semibold">Select Destination</h3>
+        <h3 className="font-semibold">{t.selectDestination}</h3>
       </div>
       
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2">
@@ -42,6 +43,13 @@ export function DestinationSelector({ destinations, selectedId, onSelect }: Dest
           </button>
         ))}
       </div>
+
+      {destinations.length === 0 && (
+        <div className="text-center py-8 text-muted-foreground">
+          <MapPin className="h-10 w-10 mx-auto mb-2 opacity-50" />
+          <p>ዝተመደበልካ መድረሻ የለን</p>
+        </div>
+      )}
     </div>
   );
 }
