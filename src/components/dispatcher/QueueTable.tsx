@@ -7,6 +7,7 @@ import { t } from '@/lib/translations';
 interface QueueTableProps {
   entries: QueueEntry[];
   onDispatch?: (id: string) => void;
+  readOnly?: boolean;
 }
 
 function formatDuration(arrivalTime: Date): string {
@@ -29,7 +30,7 @@ function formatTime(date: Date): string {
   });
 }
 
-export function QueueTable({ entries }: QueueTableProps) {
+export function QueueTable({ entries, readOnly = false }: QueueTableProps) {
   const waitingEntries = entries.filter(e => e.status === 'waiting');
 
   return (
