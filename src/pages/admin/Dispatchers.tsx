@@ -22,7 +22,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { mockUsers, mockFermatas } from '@/data/mockData';
 import { useAuth } from '@/contexts/AuthContext';
-import { t } from '@/lib/translations';
+
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Dispatcher {
   id: string;
@@ -33,6 +34,7 @@ interface Dispatcher {
 
 const Dispatchers = () => {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   
   const [dispatchers, setDispatchers] = useState<Dispatcher[]>(
@@ -75,7 +77,7 @@ const Dispatchers = () => {
 
   const handleDelete = (dispatcher: Dispatcher) => {
     setDispatchers(dispatchers.filter(d => d.id !== dispatcher.id));
-    toast.success(`${dispatcher.name} ተደምሲሱ`);
+    toast.success(`t('dispatcherDeleted', { name: dispatcher.name })`);
   };
 
   const handleFermataToggle = (fermataId: string) => {
@@ -90,12 +92,12 @@ const Dispatchers = () => {
     e.preventDefault();
     
     if (!name || !email) {
-      toast.error('ኩሉ ሓበሬታ ምልኣ');
+      toast.error(t('fillAllFields'));
       return;
     }
 
     if (selectedFermatas.length === 0) {
-      toast.error('እንተወሓደ ሓደ ፈርማታ ምረጽ');
+      toast.error(t('selectAtLeastOneFermata'));
       return;
     }
 
@@ -105,7 +107,7 @@ const Dispatchers = () => {
           ? { ...d, name, email, assignedFermatas: selectedFermatas } 
           : d
       ));
-      toast.success('ላኢኺ ተመሓይሹ');
+      toast.success(t('dispatcherUpdated'));
     } else {
       const newDispatcher: Dispatcher = {
         id: Date.now().toString(),
@@ -114,7 +116,7 @@ const Dispatchers = () => {
         assignedFermatas: selectedFermatas,
       };
       setDispatchers([...dispatchers, newDispatcher]);
-      toast.success('ሓድሽ ላኢኺ ተወሲኹ');
+      toast.success(t('dispatcherAdded'));
     }
 
     setIsModalOpen(false);
@@ -128,11 +130,11 @@ const Dispatchers = () => {
   };
 
   if (!user) return null;
-
+ 
   return (
     <div className="min-h-screen bg-background">
       <Header 
-        associationName={t.appName}
+        associationName={t('appName')}
         dispatcherName={user.name}
         onLogout={handleLogout}
       />
@@ -146,13 +148,13 @@ const Dispatchers = () => {
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold">{t.manageUsers}</h1>
-              <p className="text-muted-foreground">ላኢኺታት ምዝገብን ፈርማታ ምምዳብን</p>
+              <h1 className="text-2xl font-bold">{t('manageUsers')}</h1>
+              <p className="text-muted-foreground">{t('dispatcherDescription')}</p>
             </div>
           </div>
           <Button onClick={handleAdd}>
             <Plus className="h-4 w-4 mr-2" />
-            ሓድሽ ላኢኺ
+            {t('addDispatcher')}
           </Button>
         </div>
 
@@ -184,7 +186,7 @@ const Dispatchers = () => {
                 <div className="space-y-2">
                   <p className="text-sm font-medium flex items-center gap-1">
                     <MapPin className="h-4 w-4" />
-                    ዝተመደበ ፈርማታ:
+                    {t('assignedFermatas')}:
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {getFermataNames(dispatcher.assignedFermatas).map((name, idx) => (
@@ -200,7 +202,7 @@ const Dispatchers = () => {
                   className="w-full mt-4"
                   onClick={() => handleEdit(dispatcher)}
                 >
-                  {t.edit}
+                  {t('edit')}
                 </Button>
               </CardContent>
             </Card>
@@ -212,31 +214,31 @@ const Dispatchers = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {editingDispatcher ? 'ላኢኺ ኣስተካክል' : 'ሓድሽ ላኢኺ ወስኽ'}
+              {editingDispatcher ? t('editDispatcher') : t('addDispatcher')}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 pt-2">
             <div className="space-y-2">
-              <Label htmlFor="name">ሙሉእ ስም</Label>
+              <Label htmlFor="name">{t('fullName')}</Label>
               <Input
                 id="name"
-                placeholder="ንኣብነት፡ ኣብርሃም ገብረ"
+                placeholder={t('namePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">{t.email}</Label>
+              <Label htmlFor="email">{t('email')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="ንኣብነት፡ dispatcher@taxi.com"
+                placeholder={t('emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label>ፈርማታ ምደብ</Label>
+              <Label>{t('fermataSelection')}</Label>
               <div className="grid grid-cols-2 gap-2 p-3 border rounded-lg max-h-48 overflow-y-auto">
                 {mockFermatas.map(fermata => (
                   <div key={fermata.id} className="flex items-center space-x-2">
@@ -257,10 +259,10 @@ const Dispatchers = () => {
             </div>
             <div className="flex gap-3 pt-4">
               <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="flex-1">
-                {t.cancel}
+                {t('cancel')}
               </Button>
               <Button type="submit" className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground">
-                {editingDispatcher ? t.save : t.add}
+                {editingDispatcher ? t('save') : t('add')}
               </Button>
             </div>
           </form>

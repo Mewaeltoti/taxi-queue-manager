@@ -1,20 +1,25 @@
-import { MapPin, Check } from 'lucide-react';
+"use client";
+
+import { MapPin } from 'lucide-react';
 import { Fermata } from '@/types/taxi';
 import { cn } from '@/lib/utils';
-import { t } from '@/lib/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface DestinationSelectorProps {
   destinations: Fermata[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  placeholder?: string;
 }
 
 export function DestinationSelector({ destinations, selectedId, onSelect }: DestinationSelectorProps) {
+  const { t } = useLanguage(); // get translations
+
   return (
     <div className="bg-card rounded-xl border p-4 lg:p-5">
       <div className="flex items-center gap-2 mb-4">
         <MapPin className="h-5 w-5 text-accent" />
-        <h3 className="font-semibold">{t.selectDestination}</h3>
+        <h3 className="font-semibold">{t('selectDestination')}</h3>
       </div>
       
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2">
@@ -47,7 +52,7 @@ export function DestinationSelector({ destinations, selectedId, onSelect }: Dest
       {destinations.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
           <MapPin className="h-10 w-10 mx-auto mb-2 opacity-50" />
-          <p>ዝተመደበልካ መድረሻ የለን</p>
+          <p>{t('noDestinations')}</p>
         </div>
       )}
     </div>

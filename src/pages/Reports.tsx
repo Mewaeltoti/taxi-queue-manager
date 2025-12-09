@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { Calendar, ArrowLeft, FileDown } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { StatsCards } from '@/components/reports/StatsCards';
@@ -8,7 +8,7 @@ import { mockDailyStats, mockDispatchLogs, mockFermatas, mockUsers } from '@/dat
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { t } from '@/lib/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Select,
   SelectContent,
@@ -20,39 +20,33 @@ import {
 const Reports = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
+
   const [selectedDate] = useState(new Date());
   const [selectedFermata, setSelectedFermata] = useState<string>('all');
   const [selectedDispatcher, setSelectedDispatcher] = useState<string>('all');
 
   const dispatchers = mockUsers.filter(u => u.role === 'dispatcher');
 
-  const handleExportCSV = () => {
-    toast.success('CSV ይወርድ ኣሎ...');
-  };
-
-  const handleExportPDF = () => {
-    toast.success('PDF ይወርድ ኣሎ...');
-  };
-
+  const handleExportCSV = () => toast.success(t('exportCSVSuccess'));
+  const handleExportPDF = () => toast.success(t('exportPDFSuccess'));
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('am-ET', { 
+  const formatDate = (date: Date) =>
+    date.toLocaleDateString('am-ET', {
       weekday: 'long',
       year: 'numeric',
-      month: 'long', 
-      day: 'numeric' 
+      month: 'long',
+      day: 'numeric',
     });
-  };
 
-  // Filter logs based on selection
   const filteredLogs = mockDispatchLogs.filter(log => {
-    if (selectedFermata !== 'all' && log.destination.id !== selectedFermata) {
-      return false;
-    }
+    if (selectedFermata !== 'all' && log.destination.id !== selectedFermata) return false;
+    if (selectedDispatcher !== 'all' && log.id !== selectedDispatcher) return false;
+    
     return true;
   });
 
@@ -60,8 +54,8 @@ const Reports = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header 
-        associationName={t.appName}
+      <Header
+        associationName={t('appName')}
         dispatcherName={user.name}
         onLogout={handleLogout}
       />
@@ -76,7 +70,7 @@ const Reports = () => {
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold">{t.dailyReport}</h1>
+              <h1 className="text-2xl font-bold">{t('dailyReport')}</h1>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Calendar className="h-4 w-4" />
                 <span>{formatDate(selectedDate)}</span>
@@ -86,11 +80,11 @@ const Reports = () => {
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleExportCSV}>
               <FileDown className="h-4 w-4 mr-2" />
-              {t.exportCSV}
+              {t('exportCSV')}
             </Button>
             <Button variant="outline" onClick={handleExportPDF}>
               <FileDown className="h-4 w-4 mr-2" />
-              {t.exportPDF}
+              {t('exportPDF')}
             </Button>
           </div>
         </div>
@@ -98,13 +92,13 @@ const Reports = () => {
         {/* Filters */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <div>
-            <label className="text-sm font-medium mb-2 block">{t.fermatas}</label>
+            <label className="text-sm font-medium mb-2 block">{t('fermatas')}</label>
             <Select value={selectedFermata} onValueChange={setSelectedFermata}>
               <SelectTrigger>
-                <SelectValue placeholder={t.selectDestination} />
+                <SelectValue placeholder={t('selectDestination')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t.allFermatas}</SelectItem>
+                <SelectItem value="all">{t('allFermatas')}</SelectItem>
                 {mockFermatas.map(f => (
                   <SelectItem key={f.id} value={f.id}>
                     {f.code} - {f.name}
@@ -114,13 +108,13 @@ const Reports = () => {
             </Select>
           </div>
           <div>
-            <label className="text-sm font-medium mb-2 block">{t.dispatcher}</label>
+            <label className="text-sm font-medium mb-2 block">{t('dispatcher')}</label>
             <Select value={selectedDispatcher} onValueChange={setSelectedDispatcher}>
               <SelectTrigger>
-                <SelectValue placeholder="ላኢኺ ምረጽ" />
+                <SelectValue placeholder={t('selectDispatcher')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">ኩሉ ላኢኺታት</SelectItem>
+                <SelectItem value="all">{t('allDispatchers')}</SelectItem>
                 {dispatchers.map(d => (
                   <SelectItem key={d.id} value={d.id}>
                     {d.name}
@@ -136,8 +130,8 @@ const Reports = () => {
           <StatsCards stats={mockDailyStats} />
         </div>
 
-        {/* Dispatch Log */}
-        <DispatchLogTable 
+        {/* Dispatch Log Table */}
+        <DispatchLogTable
           logs={filteredLogs}
           onExportCSV={handleExportCSV}
           onExportPDF={handleExportPDF}

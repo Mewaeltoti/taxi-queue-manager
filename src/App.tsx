@@ -13,6 +13,9 @@ import Drivers from "./pages/admin/Drivers";
 import Taxis from "./pages/admin/Taxis";
 import Dispatchers from "./pages/admin/Dispatchers";
 import NotFound from "./pages/NotFound";
+import { useState } from "react";
+import { translations } from "./lib/translations";
+import { LanguageProvider } from "./contexts/LanguageContext";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +56,7 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 
 // Home route - redirects based on role
 function HomeRedirect() {
+   
   const { user, isAdmin } = useAuth();
   
   if (!user) {
@@ -66,9 +70,12 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={
+        
         <AuthRoute>
-          <Login />
+                    <Login />
+          
         </AuthRoute>
+        
       } />
       <Route path="/" element={<HomeRedirect />} />
       
@@ -122,7 +129,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+        <LanguageProvider>
           <AppRoutes />
+         </LanguageProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

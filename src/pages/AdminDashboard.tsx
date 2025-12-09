@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Car, Send, Users, MapPin, FileText, Eye } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
@@ -6,7 +6,7 @@ import { QueueTable } from '@/components/dispatcher/QueueTable';
 import { Button } from '@/components/ui/button';
 import { mockQueueEntries, mockFermatas, mockUsers } from '@/data/mockData';
 import { useAuth } from '@/contexts/AuthContext';
-import { t } from '@/lib/translations';
+import {  useLanguage } from '@/contexts/LanguageContext';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -19,6 +19,7 @@ import {
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [selectedFermata, setSelectedFermata] = useState<string>('all');
 
   const waitingCount = mockQueueEntries.filter(e => e.status === 'waiting').length;
@@ -30,17 +31,16 @@ const AdminDashboard = () => {
     navigate('/login');
   };
 
-  // Filter queue by fermata if selected
-  const filteredQueue = selectedFermata === 'all' 
-    ? mockQueueEntries 
+  const filteredQueue = selectedFermata === 'all'
+    ? mockQueueEntries
     : mockQueueEntries.filter(e => e.destinationId === selectedFermata || e.status === 'waiting');
 
   if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background">
-      <Header 
-        associationName={t.appName}
+      <Header
+        associationName={t('appName')}
         dispatcherName={user.name}
         onLogout={handleLogout}
       />
@@ -49,7 +49,7 @@ const AdminDashboard = () => {
         {/* Admin Role Badge */}
         <div className="mb-4">
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-            {t.admin} - {t.viewAllQueues}
+            {t('admin')} - {t('viewAllQueues')}
           </Badge>
         </div>
 
@@ -62,7 +62,7 @@ const AdminDashboard = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold">{waitingCount}</p>
-                <p className="text-sm text-muted-foreground">{t.inQueue}</p>
+                <p className="text-sm text-muted-foreground">{t('inQueue')}</p>
               </div>
             </div>
           </div>
@@ -73,7 +73,7 @@ const AdminDashboard = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold">{dispatchedToday}</p>
-                <p className="text-sm text-muted-foreground">{t.dispatchedToday}</p>
+                <p className="text-sm text-muted-foreground">{t('dispatchedToday')}</p>
               </div>
             </div>
           </div>
@@ -84,7 +84,7 @@ const AdminDashboard = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold">{activeDispatchers}</p>
-                <p className="text-sm text-muted-foreground">{t.dispatcher}</p>
+                <p className="text-sm text-muted-foreground">{t('dispatcher')}</p>
               </div>
             </div>
           </div>
@@ -95,7 +95,7 @@ const AdminDashboard = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold">{mockFermatas.length}</p>
-                <p className="text-sm text-muted-foreground">{t.fermatas}</p>
+                <p className="text-sm text-muted-foreground">{t('fermatas')}</p>
               </div>
             </div>
           </Link>
@@ -103,34 +103,34 @@ const AdminDashboard = () => {
 
         {/* Admin Quick Actions */}
         <div className="mb-6 p-4 bg-muted/30 rounded-xl">
-          <h3 className="font-medium mb-3">{t.adminPanel}</h3>
+          <h3 className="font-medium mb-3">{t('adminPanel')}</h3>
           <div className="flex flex-wrap gap-2">
             <Link to="/admin/users">
               <Button variant="outline" size="sm">
                 <Users className="h-4 w-4 mr-2" />
-                {t.manageUsers}
+                {t('manageUsers')}
               </Button>
             </Link>
             <Link to="/admin/fermatas">
               <Button variant="outline" size="sm">
                 <MapPin className="h-4 w-4 mr-2" />
-                {t.manageFermatas}
+                {t('manageFermatas')}
               </Button>
             </Link>
             <Link to="/admin/drivers">
               <Button variant="outline" size="sm">
-                {t.manageDrivers}
+                {t('manageDrivers')}
               </Button>
             </Link>
             <Link to="/admin/taxis">
               <Button variant="outline" size="sm">
-                {t.manageTaxis}
+                {t('manageTaxis')}
               </Button>
             </Link>
             <Link to="/reports">
               <Button variant="default" size="sm">
                 <FileText className="h-4 w-4 mr-2" />
-                {t.reports}
+                {t('reports')}
               </Button>
             </Link>
           </div>
@@ -140,15 +140,15 @@ const AdminDashboard = () => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
           <h2 className="text-xl font-semibold flex items-center gap-2">
             <Eye className="h-5 w-5" />
-            {t.viewAllQueues}
+            {t('viewAllQueues')}
           </h2>
           <div className="w-full sm:w-64">
             <Select value={selectedFermata} onValueChange={setSelectedFermata}>
               <SelectTrigger>
-                <SelectValue placeholder={t.selectDestination} />
+                <SelectValue placeholder={t('selectDestination')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">ኩሉ ፈርማታ</SelectItem>
+                <SelectItem value="all">{t('allFermatas')}</SelectItem>
                 {mockFermatas.map(f => (
                   <SelectItem key={f.id} value={f.id}>
                     {f.code} - {f.name}
@@ -163,7 +163,7 @@ const AdminDashboard = () => {
         <div className="relative">
           <div className="absolute top-3 right-3 z-10">
             <Badge variant="secondary" className="text-xs">
-              {t.viewAllQueues} (ንንባብ ጥራይ)
+              {t('viewAllQueues')} ({t('readOnly')})
             </Badge>
           </div>
           <QueueTable entries={filteredQueue} readOnly />
