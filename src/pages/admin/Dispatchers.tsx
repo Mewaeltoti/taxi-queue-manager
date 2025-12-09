@@ -36,7 +36,7 @@ const Dispatchers = () => {
   const { user, logout } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  
+
   const [dispatchers, setDispatchers] = useState<Dispatcher[]>(
     mockUsers
       .filter(u => u.role === 'dispatcher')
@@ -47,7 +47,7 @@ const Dispatchers = () => {
         assignedFermatas: u.assignedFermatas || [],
       }))
   );
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDispatcher, setEditingDispatcher] = useState<Dispatcher | null>(null);
   const [name, setName] = useState('');
@@ -90,7 +90,7 @@ const Dispatchers = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name || !email) {
       toast.error(t('fillAllFields'));
       return;
@@ -102,9 +102,9 @@ const Dispatchers = () => {
     }
 
     if (editingDispatcher) {
-      setDispatchers(dispatchers.map(d => 
-        d.id === editingDispatcher.id 
-          ? { ...d, name, email, assignedFermatas: selectedFermatas } 
+      setDispatchers(dispatchers.map(d =>
+        d.id === editingDispatcher.id
+          ? { ...d, name, email, assignedFermatas: selectedFermatas }
           : d
       ));
       toast.success(t('dispatcherUpdated'));
@@ -130,17 +130,17 @@ const Dispatchers = () => {
   };
 
   if (!user) return null;
- 
+
   return (
     <div className="min-h-screen bg-background">
-      <Header 
+      <Header
         associationName={t('appName')}
         dispatcherName={user.name}
         onLogout={handleLogout}
       />
 
       <main className="p-4 lg:p-6 max-w-[1200px] mx-auto">
-        <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
           <div className="flex items-center gap-3">
             <Link to="/">
               <Button variant="ghost" size="icon">
@@ -152,11 +152,15 @@ const Dispatchers = () => {
               <p className="text-muted-foreground">{t('dispatcherDescription')}</p>
             </div>
           </div>
-          <Button onClick={handleAdd}>
+          <Button
+            onClick={handleAdd}
+            className="w-full sm:w-auto flex-1 sm:flex-initial"
+          >
             <Plus className="h-4 w-4 mr-2" />
             {t('addDispatcher')}
           </Button>
         </div>
+
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {dispatchers.map(dispatcher => (
@@ -172,8 +176,8 @@ const Dispatchers = () => {
                       <p className="text-sm text-muted-foreground">{dispatcher.email}</p>
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="icon"
                     className="text-destructive hover:text-destructive"
                     onClick={() => handleDelete(dispatcher)}
@@ -196,9 +200,9 @@ const Dispatchers = () => {
                     ))}
                   </div>
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="w-full mt-4"
                   onClick={() => handleEdit(dispatcher)}
                 >

@@ -89,6 +89,20 @@ export const mockDispatchLogs: DispatchLog[] = [
     destination: mockFermatas[1],
     dispatchedAt: new Date(now.getTime() - 75 * 60000),
   },
+  {
+    id: '2',
+    queueEntry: {
+      id: 'log3',
+      queueNumber: 3,
+      plateNumber: 'TX-2468',
+      driverName: 'ኤሚሊ ዳዊት',
+      arrivalTime: new Date(now.getTime() - 100 * 60000),
+      status: 'dispatched',
+      dispatchedAt: new Date(now.getTime() - 75 * 60000),
+    },
+    destination: mockFermatas[1],
+    dispatchedAt: new Date(now.getTime() - 75 * 60000),
+  },
 ];
 
 export const mockDailyStats: DailyStats = {

@@ -33,7 +33,7 @@ const AdminDashboard = () => {
 
   const filteredQueue = selectedFermata === 'all'
     ? mockQueueEntries
-    : mockQueueEntries.filter(e => e.destinationId === selectedFermata || e.status === 'waiting');
+    : mockQueueEntries.filter(e => e.destinationId === selectedFermata );
 
   if (!user) return null;
 
@@ -161,7 +161,7 @@ const AdminDashboard = () => {
 
         {/* Queue Table - Read Only for Admin */}
         <div className="relative">
-          <div className="absolute top-3 right-3 z-10">
+          <div className="relative top-3 right-2 z-10">
             <Badge variant="secondary" className="text-xs">
               {t('viewAllQueues')} ({t('readOnly')})
             </Badge>
