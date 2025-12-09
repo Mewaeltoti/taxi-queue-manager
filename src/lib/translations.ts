@@ -85,9 +85,10 @@ export const t = {
   fermatas: 'ፈርማታ',
   manageDrivers: 'ሾፌራት ኣመሓድር',
   manageTaxis: 'ታክስታት ኣመሓድር',
-  manageUsers: 'ተጠቀምቲ ኣመሓድር',
+  manageUsers: 'ላኢኺታት ኣመሓድር',
   manageFermatas: 'ፈርማታ ኣመሓድር',
   viewAllQueues: 'ኩሉ ወረፋ ርአ',
+  assignDispatchers: 'ላኢኺታት ምምዳብ',
   
   // Status
   status: 'ኩነታት',
@@ -104,4 +105,6 @@ export const t = {
   queueManagement: 'ኣገልግሎት ወረፋ ታክሲ',
   notifications: 'ሓበሬታታት',
   assignedDestinations: 'ዝተመደበልካ መድረሻታት',
+  readOnly: 'ንንባብ ጥራይ',
+  allFermatas: 'ኩሉ ፈርማታ',
 };
