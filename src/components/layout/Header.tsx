@@ -1,6 +1,7 @@
-import { LogOut, Menu, Bell } from 'lucide-react';
+import { LogOut, Menu, Bell, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { t } from '@/lib/translations';
 
 interface HeaderProps {
   associationName: string;
@@ -28,12 +29,12 @@ export function Header({
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-sm">
-              {associationName.charAt(0)}
+              ታ
             </span>
           </div>
           <div className="hidden sm:block">
             <h1 className="font-semibold text-foreground leading-tight">{associationName}</h1>
-            <p className="text-xs text-muted-foreground">Taxi Queue Management</p>
+            <p className="text-xs text-muted-foreground">{t.queueManagement}</p>
           </div>
         </div>
       </div>
@@ -49,13 +50,19 @@ export function Header({
         <div className="hidden sm:flex items-center gap-3 px-3 py-1.5 rounded-lg bg-secondary">
           <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center">
             <span className="text-primary font-medium text-xs">
-              {dispatcherName.split(' ').map(n => n[0]).join('')}
+              {dispatcherName.charAt(0)}
             </span>
           </div>
           <span className="text-sm font-medium">{dispatcherName}</span>
         </div>
 
-        <Button variant="ghost" size="icon" onClick={onLogout} className="text-muted-foreground hover:text-destructive">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onLogout} 
+          className="text-muted-foreground hover:text-destructive"
+          title={t.logout}
+        >
           <LogOut className="h-5 w-5" />
         </Button>
       </div>

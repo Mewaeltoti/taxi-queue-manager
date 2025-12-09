@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Car, User, Tag, X } from 'lucide-react';
+import { Car, User, Tag } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { t } from '@/lib/translations';
 
 interface RegisterTaxiModalProps {
   open: boolean;
@@ -33,7 +34,7 @@ export function RegisterTaxiModal({ open, onOpenChange, onSubmit }: RegisterTaxi
     e.preventDefault();
     
     if (!plateNumber || !driverName || !taxiType) {
-      toast.error('Please fill in all fields');
+      toast.error('ኩሎም ቦታታት ምልኣዮም');
       return;
     }
 
@@ -42,7 +43,7 @@ export function RegisterTaxiModal({ open, onOpenChange, onSubmit }: RegisterTaxi
     setDriverName('');
     setTaxiType('');
     onOpenChange(false);
-    toast.success(`Taxi ${plateNumber} added to queue`);
+    toast.success(`ታክሲ ${plateNumber} ናብ ወረፋ ኣትዩ`);
   };
 
   return (
@@ -51,7 +52,7 @@ export function RegisterTaxiModal({ open, onOpenChange, onSubmit }: RegisterTaxi
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Car className="h-5 w-5 text-accent" />
-            Register Taxi to Queue
+            {t.registerTaxi}
           </DialogTitle>
         </DialogHeader>
 
@@ -59,11 +60,11 @@ export function RegisterTaxiModal({ open, onOpenChange, onSubmit }: RegisterTaxi
           <div className="space-y-2">
             <Label htmlFor="plate" className="flex items-center gap-2">
               <Tag className="h-4 w-4" />
-              Plate Number
+              {t.plateNumber}
             </Label>
             <Input
               id="plate"
-              placeholder="e.g., TX-1234"
+              placeholder="ን.ኣ. TX-1234"
               value={plateNumber}
               onChange={(e) => setPlateNumber(e.target.value.toUpperCase())}
               className="uppercase"
@@ -73,11 +74,11 @@ export function RegisterTaxiModal({ open, onOpenChange, onSubmit }: RegisterTaxi
           <div className="space-y-2">
             <Label htmlFor="driver" className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              Driver Name
+              {t.driverName}
             </Label>
             <Input
               id="driver"
-              placeholder="e.g., John Smith"
+              placeholder="ን.ኣ. መዋእል ወረደ"
               value={driverName}
               onChange={(e) => setDriverName(e.target.value)}
             />
@@ -86,17 +87,17 @@ export function RegisterTaxiModal({ open, onOpenChange, onSubmit }: RegisterTaxi
           <div className="space-y-2">
             <Label htmlFor="type" className="flex items-center gap-2">
               <Car className="h-4 w-4" />
-              Taxi Type
+              {t.taxiType}
             </Label>
             <Select value={taxiType} onValueChange={setTaxiType}>
               <SelectTrigger>
-                <SelectValue placeholder="Select taxi type" />
+                <SelectValue placeholder="ዓይነት ታክሲ ምረጽ" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="sedan">Sedan</SelectItem>
-                <SelectItem value="suv">SUV</SelectItem>
-                <SelectItem value="van">Van</SelectItem>
-                <SelectItem value="minibus">Minibus</SelectItem>
+                <SelectItem value="sedan">{t.sedan}</SelectItem>
+                <SelectItem value="suv">{t.suv}</SelectItem>
+                <SelectItem value="van">{t.van}</SelectItem>
+                <SelectItem value="minibus">{t.minibus}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -108,13 +109,13 @@ export function RegisterTaxiModal({ open, onOpenChange, onSubmit }: RegisterTaxi
               onClick={() => onOpenChange(false)}
               className="flex-1"
             >
-              Cancel
+              {t.cancel}
             </Button>
             <Button 
               type="submit" 
               className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground"
             >
-              Add to Queue
+              {t.addToQueue}
             </Button>
           </div>
         </form>
