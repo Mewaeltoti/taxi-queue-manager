@@ -1,7 +1,7 @@
 import { Driver, Fermata, QueueEntry, DispatchLog, DailyStats } from '@/types/taxi';
 
 export const mockDrivers: Driver[] = [
-  { id: '1', name: 'John Smith', phone: '+1 555-0101', licenseId: 'DL-2024-001' },
+  { id: '1', name: 'Mewael Werede', phone: '+251 978-187178', licenseId: 'DL-2024-001' },
   { id: '2', name: 'Maria Garcia', phone: '+1 555-0102', licenseId: 'DL-2024-002' },
   { id: '3', name: 'David Johnson', phone: '+1 555-0103', licenseId: 'DL-2024-003' },
   { id: '4', name: 'Sarah Williams', phone: '+1 555-0104', licenseId: 'DL-2024-004' },

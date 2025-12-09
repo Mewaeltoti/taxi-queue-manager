@@ -21,14 +21,14 @@ export interface Fermata {
 export interface QueueEntry {
   id: string;
   queueNumber: number;
-  taxiId: string;
   plateNumber: string;
   driverName: string;
+  status: "waiting" | "dispatched";
   arrivalTime: Date;
-  status: 'waiting' | 'dispatched';
-  dispatchedAt?: Date;
-  destinationId?: string;
+  destinationId?: string;   // optional
+  dispatchedAt?: Date;      // optional
 }
+
 
 export interface DispatchLog {
   id: string;
