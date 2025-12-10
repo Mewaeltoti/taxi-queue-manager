@@ -1,111 +1,215 @@
 // Tigrigna translations for the Taxi Queue Manager
 export const t = {
-    // Common
-    appName: 'ታክሲ ወረፋ ኣገልግሎት',
-    logout: 'ውጻእ',
-    login: 'ተጠቐም',
-    email: 'ኢመይል',
-    password: 'ሚስጢራዊ ቃል',
-    submit: 'ላእኽ',
-    cancel: 'ሰርዝ',
-    save: 'ዓቅብ',
-    delete: 'ደምስስ',
-    edit: 'ኣስተካክል',
-    add: 'ወስኽ',
-    search: 'ድለ',
-    loading: 'ይጽዕን...',
-    
-    // Auth
-    loginTitle: 'ናብ ስርዓት ይእተዉ',
-    loginSubtitle: 'ኢመይልን ሚስጢራዊ ቃልን ኣእትዉ',
-    invalidCredentials: 'ኢመይል ወይ ሚስጢራዊ ቃል ጌጋ',
-    
-    // Roles
-    admin: 'ኣድሚን',
-    dispatcher: 'ላኢኺ',
-    
-    // Queue
-    queue: 'ወረፋ',
-    taxiQueue: 'ወረፋ ታክሲ',
-    queueNumber: 'ቁጽሪ',
-    inQueue: 'ኣብ ወረፋ',
-    waiting: 'ይጽበ',
-    next: 'ዝቕጽል',
-    noTaxisInQueue: 'ታክሲ ኣብ ወረፋ የለን',
-    
-    // Taxi
-    taxi: 'ታክሲ',
-    taxis: 'ታክስታት',
-    plateNumber: 'ቁጽሪ ሰሌዳ',
-    taxiType: 'ዓይነት ታክሲ',
-    registerTaxi: 'ታክሲ ምዝገብ',
-    addToQueue: 'ናብ ወረፋ ወስኽ',
-    
-    // Driver
-    driver: 'ሾፌር',
-    drivers: 'ሾፌራት',
-    driverName: 'ስም ሾፌር',
-    phone: 'ቁጽሪ ተሌፎን',
-    licenseId: 'ፍቓድ መዘወሪ',
-    
-    // Destination
-    destination: 'መድረሻ',
-    destinations: 'መድረሻታት',
-    selectDestination: 'መድረሻ ምረጽ',
-    
-    // Dispatch
-    dispatch: 'ልኣኽ',
-    dispatchNext: 'ዝቕጽል ልኣኽ',
-    dispatched: 'ተላኢኹ',
-    dispatchedToday: 'ሎሚ ዝተላእኩ',
-    
-    // Time
-    arrivalTime: 'ሰዓት ምብጻሕ',
-    waitingTime: 'ግዜ ምጽባይ',
-    justNow: 'ሕጂ',
-    
-    // Stats
-    totalDispatched: 'ጠቕላላ ዝተላእኩ',
-    peakHour: 'ልዑል ሰዓት',
-    mostFrequentDest: 'ብብዝሒ ዝተላእኸ',
-    avgWaitTime: 'ማእከላይ ግዜ ምጽባይ',
-    activeDrivers: 'ንጡፋት ሾፌራት',
-    
-    // Reports
-    reports: 'ጸብጻብ',
-    dailyReport: 'ዕለታዊ ጸብጻብ',
-    exportCSV: 'CSV ኣውርድ',
-    exportPDF: 'PDF ኣውርድ',
-    dispatchLogs: 'መዝገብ ምልኣኽ',
-    
-    // Admin
-    adminPanel: 'ኣድሚን ፓነል',
-    dashboard: 'ዳሽቦርድ',
-    users: 'ተጠቀምቲ',
-    fermatas: 'ፈርማታ',
-    manageDrivers: 'ሾፌራት ኣመሓድር',
-    manageTaxis: 'ታክስታት ኣመሓድር',
-    manageUsers: 'ላኢኺታት ኣመሓድር',
-    manageFermatas: 'ፈርማታ ኣመሓድር',
-    viewAllQueues: 'ኩሉ ወረፋ ርአ',
-    assignDispatchers: 'ላኢኺታት ምምዳብ',
-    
-    // Status
-    status: 'ኩነታት',
-    active: 'ንጡፍ',
-    inactive: 'ዘይንጡፍ',
-    
-    // Taxi Types
-    sedan: 'ሰዳን',
-    suv: 'ኤስዩቪ',
-    van: 'ቫን',
-    minibus: 'ሚኒባስ',
-    
-    // Misc
-    queueManagement: 'ኣገልግሎት ወረፋ ታክሲ',
-    notifications: 'ሓበሬታታት',
-    assignedDestinations: 'ዝተመደበልካ መድረሻታት',
-    readOnly: 'ንንባብ ጥራይ',
-    allFermatas: 'ኩሉ ፈርማታ',
-  };
+  // Common
+  appName: 'ታክሲ ወረፋ ኣገልግሎት',
+  logout: 'ውጻእ',
+  login: 'ተጠቐም',
+  email: 'ኢመይል',
+  password: 'ሚስጢራዊ ቃል',
+  submit: 'ላእኽ',
+  cancel: 'ሰርዝ',
+  save: 'ዓቅብ',
+  delete: 'ደምስስ',
+  edit: 'ኣስተካክል',
+  add: 'ወስኽ',
+  search: 'ድለ',
+  loading: 'ይጽዕን...',
+  noDataToExport: 'ዝወጽእ ዳታ የለን',
+  exportCSVSuccess: 'CSV ተወሪዱ',
   
+  // Auth
+  loginTitle: 'ናብ ስርዓት ይእተዉ',
+  loginSubtitle: 'ኢመይልን ሚስጢራዊ ቃልን ኣእትዉ',
+  invalidCredentials: 'ኢመይል ወይ ሚስጢራዊ ቃል ጌጋ',
+  
+  // Roles
+  admin: 'ኣድሚን',
+  dispatcher: 'ላኢኺ',
+  
+  // Queue
+  queue: 'ወረፋ',
+  taxiQueue: 'ወረፋ ታክሲ',
+  queueNumber: 'ቁጽሪ',
+  inQueue: 'ኣብ ወረፋ',
+  waiting: 'ይጽበ',
+  next: 'ዝቕጽል',
+  noTaxisInQueue: 'ታክሲ ኣብ ወረፋ የለን',
+  noTaxiInQueue: 'ታክሲ ኣብ ወረፋ የለን',
+  noAssignedDestination: 'ዝተመደበ መድረሻ የለን',
+  addedToQueue: 'ናብ ወረፋ ተወሲኹ',
+  dispatchedTo: 'ናብ ተላኢኹ',
+  
+  // Extended Statuses
+  skipped: 'ተሰጊሩ',
+  notReady: 'ድልው ኣይኮነን',
+  returned: 'ተመሊሱ',
+  canceled: 'ተሰሪዙ',
+  
+  // Queue Actions
+  skip: 'ስገር',
+  skipOne: 'ስገር 1',
+  markNotReady: 'ድልው ኣይኮነን',
+  markReturned: 'ተመሊሱ',
+  removeFromQueue: 'ካብ ወረፋ ኣውጽእ',
+  
+  // Taxi
+  taxi: 'ታክሲ',
+  taxis: 'ታክስታት',
+  plateNumber: 'ቁጽሪ ሰሌዳ',
+  taxiType: 'ዓይነት ታክሲ',
+  registerTaxi: 'ታክሲ ምዝገብ',
+  addToQueue: 'ናብ ወረፋ ወስኽ',
+  
+  // Driver
+  driver: 'ሾፌር',
+  drivers: 'ሾፌራት',
+  driverName: 'ስም ሾፌር',
+  phone: 'ቁጽሪ ተሌፎን',
+  licenseId: 'ፍቓድ መዘወሪ',
+  
+  // Destination
+  destination: 'መድረሻ',
+  destinations: 'መድረሻታት',
+  selectDestination: 'መድረሻ ምረጽ',
+  
+  // Dispatch
+  dispatch: 'ልኣኽ',
+  dispatchNext: 'ዝቕጽል ልኣኽ',
+  dispatched: 'ተላኢኹ',
+  dispatchedToday: 'ሎሚ ዝተላእኩ',
+  
+  // Time
+  arrivalTime: 'ሰዓት ምብጻሕ',
+  waitingTime: 'ግዜ ምጽባይ',
+  justNow: 'ሕጂ',
+  minutes: 'ደቓይቕ',
+  hours: 'ሰዓታት',
+  
+  // Stats
+  totalDispatched: 'ጠቕላላ ዝተላእኩ',
+  peakHour: 'ልዑል ሰዓት',
+  mostFrequentDest: 'ብብዝሒ ዝተላእኸ',
+  avgWaitTime: 'ማእከላይ ግዜ ምጽባይ',
+  activeDrivers: 'ንጡፋት ሾፌራት',
+  
+  // Reports
+  reports: 'ጸብጻብ',
+  dailyReport: 'ዕለታዊ ጸብጻብ',
+  exportCSV: 'CSV ኣውርድ',
+  exportPDF: 'PDF ኣውርድ',
+  dispatchLogs: 'መዝገብ ምልኣኽ',
+  reportTaxi: 'ጸብጻብ ሃብ',
+  reportCenter: 'ማእከል ጸብጻብ',
+  openReports: 'ክፉታት ጸብጻባት',
+  allReports: 'ኩሎም ጸብጻባት',
+  
+  // Report Reasons
+  wrongFermata: 'ጌጋ ፈርማታ',
+  wrongAssociation: 'ጌጋ ማሕበር',
+  unauthorizedDispatch: 'ዘይፍቁድ ምልኣኽ',
+  excessiveSkips: 'ብዙሕ ምስጋር',
+  timeout: 'ግዜ ወዲኡ',
+  otherReason: 'ካልእ',
+  
+  // Report Status
+  open: 'ክፉት',
+  inProgress: 'ኣብ ስራሕ',
+  resolved: 'ተፈቲሑ',
+  closed: 'ተዓጽዩ',
+  
+  // Report Actions
+  closeReport: 'ጸብጻብ ዕጾ',
+  resolveReport: 'ጸብጻብ ፍታሕ',
+  addComment: 'ርእይቶ ወስኽ',
+  suspendTaxi: 'ታክሲ ኣቋርጽ',
+  suspendAssociation: 'ማሕበር ኣቋርጽ',
+  autoGenerated: 'ባዕሉ ዝተፈጥረ',
+  
+  // Associations
+  association: 'ማሕበር',
+  associations: 'ማሕበራት',
+  manageAssociations: 'ማሕበራት ኣመሓድር',
+  associationCode: 'ኮድ ማሕበር',
+  authorized: 'ዝፍቀድ',
+  unauthorized: 'ዘይፍቀድ',
+  
+  // Admin
+  adminPanel: 'ኣድሚን ፓነል',
+  dashboard: 'ዳሽቦርድ',
+  users: 'ተጠቀምቲ',
+  fermatas: 'ፈርማታ',
+  manageDrivers: 'ሾፌራት ኣመሓድር',
+  manageTaxis: 'ታክስታት ኣመሓድር',
+  manageUsers: 'ላኢኺታት ኣመሓድር',
+  manageFermatas: 'ፈርማታ ኣመሓድር',
+  viewAllQueues: 'ኩሉ ወረፋ ርአ',
+  assignDispatchers: 'ላኢኺታት ምምዳብ',
+  assignFermatas: 'ፈርማታ ምምዳብ',
+  selectDispatcher: 'ላኢኺ ምረጽ',
+  allDispatchers: 'ኩሎም ላኢኺታት',
+  
+  // Activity & Audit Logs
+  activityLogs: 'መዝገብ ንጥፈታት',
+  auditLogs: 'መዝገብ ምርመራ',
+  action: 'ተግባር',
+  actor: 'ፈጻሚ',
+  timestamp: 'ግዜ',
+  oldValue: 'ናይ ቀደም',
+  newValue: 'ሓድሽ',
+  
+  // Audit Actions
+  queueCreated: 'ወረፋ ተፈጢሩ',
+  queueUpdated: 'ወረፋ ተቐይሩ',
+  queueSkipped: 'ወረፋ ተሰጊሩ',
+  queueDispatched: 'ወረፋ ተላኢኹ',
+  queueCanceled: 'ወረፋ ተሰሪዙ',
+  taxiNotReady: 'ታክሲ ድልው ኣይኮነን',
+  taxiReturned: 'ታክሲ ተመሊሱ',
+  unauthorizedAttempt: 'ዘይፍቁድ ፈተነ',
+  reportCreated: 'ጸብጻብ ተፈጢሩ',
+  reportResolved: 'ጸብጻብ ተፈቲሑ',
+  dispatcherAssigned: 'ላኢኺ ተመዲቡ',
+  fermataCreated: 'ፈርማታ ተፈጢሩ',
+  driverCreated: 'ሾፌር ተፈጢሩ',
+  taxiCreated: 'ታክሲ ተፈጢሩ',
+  
+  // Filters
+  filterByFermata: 'ብፈርማታ ፍልተር',
+  filterByDispatcher: 'ብላኢኺ ፍልተር',
+  filterByTaxi: 'ብታክሲ ፍልተር',
+  filterByStatus: 'ብኩነታት ፍልተር',
+  
+  // Status
+  status: 'ኩነታት',
+  active: 'ንጡፍ',
+  inactive: 'ዘይንጡፍ',
+  suspended: 'ተኣጊዱ',
+  
+  // Taxi Types
+  sedan: 'ሰዳን',
+  suv: 'ኤስዩቪ',
+  van: 'ቫን',
+  minibus: 'ሚኒባስ',
+  
+  // Skip Count
+  skipCount: 'ብዝሒ ምስጋር',
+  timesSkipped: 'ግዜ ተሰጊሩ',
+  
+  // Misc
+  queueManagement: 'ኣገልግሎት ወረፋ ታክሲ',
+  notifications: 'ሓበሬታታት',
+  assignedDestinations: 'ዝተመደበልካ መድረሻታት',
+  readOnly: 'ንንባብ ጥራይ',
+  allFermatas: 'ኩሉ ፈርማታ',
+  allTaxis: 'ኩሎም ታክስታት',
+  allStatuses: 'ኩሎም ኩነታት',
+  description: 'መግለጺ',
+  comments: 'ርእይቶታት',
+  createdAt: 'ዝተፈጥረ',
+  resolvedAt: 'ዝተፈትሐ',
+  resolvedBy: 'ዝፈትሐ',
+  noReports: 'ጸብጻብ የለን',
+  noLogs: 'መዝገብ የለን',
+  confirmAction: 'ተግባር ኣረጋግጽ',
+  areYouSure: 'ርግጸኛ ዲኻ?',
+};
