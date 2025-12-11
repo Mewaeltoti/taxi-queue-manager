@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import DispatcherDashboard from "./pages/DispatcherDashboard";
+import DispatcherReports from "./pages/dispatcher/DispatcherReports";
 import AdminDashboard from "./pages/AdminDashboard";
 import Login from "./pages/Login";
 import Reports from "./pages/Reports";
@@ -78,6 +79,11 @@ function AppRoutes() {
       <Route path="/dispatcher" element={
         <ProtectedRoute dispatcherOnly>
           <DispatcherDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/dispatcher/reports" element={
+        <ProtectedRoute dispatcherOnly>
+          <DispatcherReports />
         </ProtectedRoute>
       } />
       

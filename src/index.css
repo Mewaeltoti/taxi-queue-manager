@@ -6,101 +6,101 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
+    --background: 0 0% 100%;
+    --foreground: 215 25% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 215 25% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 215 25% 15%;
 
-    --primary: 222 47% 20%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 217 91% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 94%;
-    --secondary-foreground: 222 47% 20%;
+    --secondary: 214 95% 93%;
+    --secondary-foreground: 217 91% 35%;
 
-    --muted: 210 20% 96%;
+    --muted: 214 32% 96%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 38 92% 50%;
+    --accent: 217 91% 50%;
     --accent-foreground: 0 0% 100%;
 
-    --success: 160 84% 39%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 222 47% 20%;
+    --ring: 217 91% 50%;
 
-    --radius: 0.625rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 20% 94%;
-    --sidebar-primary: 38 92% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 47% 18%;
-    --sidebar-accent-foreground: 210 20% 94%;
-    --sidebar-border: 222 40% 20%;
-    --sidebar-ring: 38 92% 50%;
+    --sidebar-background: 217 91% 50%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 217 91% 50%;
+    --sidebar-accent: 217 80% 45%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 217 80% 45%;
+    --sidebar-ring: 0 0% 100%;
 
-    /* Queue specific */
-    --queue-waiting: 210 20% 96%;
-    --queue-next: 38 92% 95%;
-    --queue-dispatched: 160 60% 95%;
+    /* Queue specific - blue theme */
+    --queue-waiting: 214 95% 97%;
+    --queue-next: 217 91% 92%;
+    --queue-dispatched: 142 60% 95%;
   }
 
   .dark {
-    --background: 222 47% 6%;
+    --background: 215 25% 8%;
     --foreground: 210 20% 98%;
 
-    --card: 222 47% 9%;
+    --card: 215 25% 11%;
     --card-foreground: 210 20% 98%;
 
-    --popover: 222 47% 9%;
+    --popover: 215 25% 11%;
     --popover-foreground: 210 20% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222 47% 11%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 222 40% 15%;
+    --secondary: 215 30% 18%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 222 40% 15%;
+    --muted: 215 30% 18%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 38 92% 50%;
+    --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
 
-    --success: 160 84% 39%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
-    --destructive: 0 62% 30%;
+    --destructive: 0 62% 50%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 222 40% 18%;
-    --input: 222 40% 18%;
-    --ring: 38 92% 50%;
+    --border: 215 30% 22%;
+    --input: 215 30% 22%;
+    --ring: 217 91% 60%;
 
-    --sidebar-background: 222 47% 6%;
+    --sidebar-background: 215 25% 8%;
     --sidebar-foreground: 210 20% 94%;
-    --sidebar-primary: 38 92% 50%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 47% 12%;
+    --sidebar-accent: 215 30% 15%;
     --sidebar-accent-foreground: 210 20% 94%;
-    --sidebar-border: 222 40% 15%;
-    --sidebar-ring: 38 92% 50%;
+    --sidebar-border: 215 30% 20%;
+    --sidebar-ring: 217 91% 60%;
 
-    --queue-waiting: 222 40% 12%;
-    --queue-next: 38 60% 15%;
-    --queue-dispatched: 160 40% 12%;
+    --queue-waiting: 215 30% 15%;
+    --queue-next: 217 50% 20%;
+    --queue-dispatched: 142 40% 15%;
   }
 }
 
@@ -117,7 +117,7 @@
 
 @layer components {
   .queue-row-next {
-    @apply bg-queue-next border-l-4 border-l-accent;
+    @apply bg-queue-next border-l-4 border-l-primary animate-pulse-subtle;
   }
 
   .queue-row-waiting {
@@ -128,24 +128,36 @@
     @apply bg-queue-dispatched text-muted-foreground;
   }
 
+  .queue-row-not-ready {
+    @apply bg-destructive/10 border-l-4 border-l-destructive;
+  }
+
   .stat-card {
-    @apply bg-card rounded-xl p-6 border shadow-sm transition-all duration-200 hover:shadow-md;
+    @apply bg-card rounded-xl p-6 border shadow-sm transition-all duration-300 hover:shadow-lg hover:border-primary/20;
   }
 
   .dispatch-button {
-    @apply bg-accent text-accent-foreground font-semibold px-6 py-3 rounded-lg shadow-lg shadow-accent/25 hover:shadow-xl hover:shadow-accent/30 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0;
+    @apply bg-primary text-primary-foreground font-semibold px-6 py-3 rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0;
   }
 
   .destination-chip {
-    @apply px-4 py-3 rounded-lg border-2 cursor-pointer transition-all duration-200 font-medium;
+    @apply px-4 py-3 rounded-xl border-2 cursor-pointer transition-all duration-200 font-medium;
   }
 
   .destination-chip-selected {
-    @apply bg-accent text-accent-foreground border-accent shadow-lg shadow-accent/20;
+    @apply bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20;
   }
 
   .destination-chip-unselected {
-    @apply bg-card border-border hover:border-accent/50 hover:bg-accent/5;
+    @apply bg-card border-border hover:border-primary/50 hover:bg-primary/5;
+  }
+
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-sm rounded-xl border shadow-lg;
+  }
+
+  .modern-input {
+    @apply bg-background border-2 border-border focus:border-primary transition-colors duration-200 rounded-xl;
   }
 }
 

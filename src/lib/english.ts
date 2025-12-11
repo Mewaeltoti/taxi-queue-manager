@@ -147,6 +147,10 @@ export const t = {
   assignFermatas: 'Assign Fermatas',
   selectDispatcher: 'Select Dispatcher',
   allDispatchers: 'All Dispatchers',
+  assignedFermata: 'Assigned Fermata',
+  selectOneFermata: 'Please select one fermata',
+  selectOneFermataHint: 'Each dispatcher can only be assigned to one fermata',
+  viewAllReports: 'View All Reports',
 
   // Activity & Audit Logs
   activityLogs: 'Activity Logs',
