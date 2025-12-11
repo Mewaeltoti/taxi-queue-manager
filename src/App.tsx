@@ -12,9 +12,9 @@ import Fermatas from "./pages/admin/Fermatas";
 import Drivers from "./pages/admin/Drivers";
 import Taxis from "./pages/admin/Taxis";
 import Dispatchers from "./pages/admin/Dispatchers";
+import ReportCenter from "./pages/admin/ReportCenter";
+import AuditLogs from "./pages/admin/AuditLogs";
 import NotFound from "./pages/NotFound";
-import { useState } from "react";
-import { translations } from "./lib/translations";
 import { LanguageProvider } from "./contexts/LanguageContext";
 
 const queryClient = new QueryClient();
@@ -47,7 +47,6 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, isAdmin } = useAuth();
   
   if (user) {
-    // Redirect based on role
     return <Navigate to={isAdmin ? "/admin" : "/dispatcher"} replace />;
   }
   
@@ -56,7 +55,6 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 
 // Home route - redirects based on role
 function HomeRedirect() {
-   
   const { user, isAdmin } = useAuth();
   
   if (!user) {
@@ -70,12 +68,9 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={
-        
         <AuthRoute>
-                    <Login />
-          
+          <Login />
         </AuthRoute>
-        
       } />
       <Route path="/" element={<HomeRedirect />} />
       
@@ -117,6 +112,16 @@ function AppRoutes() {
           <Dispatchers />
         </ProtectedRoute>
       } />
+      <Route path="/admin/reports" element={
+        <ProtectedRoute adminOnly>
+          <ReportCenter />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/audit-logs" element={
+        <ProtectedRoute adminOnly>
+          <AuditLogs />
+        </ProtectedRoute>
+      } />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -129,9 +134,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-        <LanguageProvider>
-          <AppRoutes />
-         </LanguageProvider>
+          <LanguageProvider>
+            <AppRoutes />
+          </LanguageProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

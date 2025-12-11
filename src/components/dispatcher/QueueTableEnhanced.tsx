@@ -4,6 +4,8 @@ import { QueueEntry, QueueStatus } from '@/types/database';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   DropdownMenu,
@@ -15,7 +17,7 @@ import { ReportTaxiModal } from './ReportTaxiModal';
 
 interface QueueTableEnhancedProps {
   entries: QueueEntry[];
-  onSkip?: (entryId: string) => void;
+  onSkip?: (entryId: string, positions: number) => void;
   onDispatch?: (entryId: string) => void;
   onStatusChange?: (entryId: string, status: 'not_ready' | 'returned' | 'canceled') => void;
   onReport?: (entryId: string, taxiId: string, reason: string, description?: string) => void;
@@ -53,6 +55,8 @@ export function QueueTableEnhanced({
   const { t } = useLanguage();
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<QueueEntry | null>(null);
+  const [selectedTaxiId, setSelectedTaxiId] = useState<string | null>(null);
+  const [skipPositions, setSkipPositions] = useState(1);
 
   const activeEntries = entries.filter(e => 
     ['waiting', 'skipped', 'not_ready', 'returned'].includes(e.status)
@@ -104,6 +108,14 @@ export function QueueTableEnhanced({
     setSelectedEntry(null);
   };
 
+  const handleSkipSelected = () => {
+    if (selectedTaxiId && onSkip) {
+      onSkip(selectedTaxiId, skipPositions);
+      setSelectedTaxiId(null);
+      setSkipPositions(1);
+    }
+  };
+
   const isNextInQueue = (entry: QueueEntry, index: number) => {
     return index === 0 && entry.status === 'waiting';
   };
@@ -114,8 +126,56 @@ export function QueueTableEnhanced({
            index < activeEntries.length - 1;
   };
 
+  const selectedTaxiEntry = activeEntries.find(e => e.id === selectedTaxiId);
+  const selectedTaxiIndex = selectedTaxiEntry ? activeEntries.indexOf(selectedTaxiEntry) : -1;
+  const maxSkipPositions = selectedTaxiIndex >= 0 ? activeEntries.length - 1 - selectedTaxiIndex : 1;
+
   return (
     <>
+      {/* Skip Control Panel */}
+      {!readOnly && (
+        <div className="bg-card rounded-xl border p-4 mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+            <div className="flex-1">
+              <Label className="text-sm font-medium mb-2 block">{t('selectedTaxi')}</Label>
+              <div className="text-sm text-muted-foreground">
+                {selectedTaxiEntry ? (
+                  <span className="font-semibold text-foreground">
+                    #{selectedTaxiEntry.queue_number} - {selectedTaxiEntry.taxi?.plate_number || 'N/A'}
+                  </span>
+                ) : (
+                  t('selectTaxiFromQueue')
+                )}
+              </div>
+            </div>
+            <div className="w-32">
+              <Label htmlFor="skipPositions" className="text-sm font-medium mb-2 block">
+                {t('skipByPositions')}
+              </Label>
+              <Input
+                id="skipPositions"
+                type="number"
+                min={1}
+                max={maxSkipPositions > 0 ? maxSkipPositions : 1}
+                value={skipPositions}
+                onChange={(e) => setSkipPositions(Math.max(1, Math.min(parseInt(e.target.value) || 1, maxSkipPositions || 1)))}
+                className="h-9"
+                disabled={!selectedTaxiId}
+              />
+            </div>
+            <Button
+              onClick={handleSkipSelected}
+              disabled={!selectedTaxiId || isLoading || selectedTaxiIndex >= activeEntries.length - 1}
+              variant="outline"
+              className="h-9"
+            >
+              <SkipForward className="h-4 w-4 mr-2" />
+              {t('skipTaxi')}
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-card rounded-xl border overflow-hidden">
         {/* Mobile View */}
         <div className="lg:hidden">
@@ -129,14 +189,31 @@ export function QueueTableEnhanced({
               {activeEntries.map((entry, index) => (
                 <div
                   key={entry.id}
+                  onClick={() => !readOnly && canSkip(entry, index) && setSelectedTaxiId(entry.id)}
                   className={cn(
-                    'p-4 transition-colors animate-slide-up',
-                    isNextInQueue(entry, index) ? 'queue-row-next' : statusColors[entry.status]
+                    'p-4 transition-colors animate-slide-up cursor-pointer',
+                    isNextInQueue(entry, index) ? 'queue-row-next' : statusColors[entry.status],
+                    selectedTaxiId === entry.id && 'ring-2 ring-primary ring-inset'
                   )}
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
+                      {/* Radio Selection */}
+                      {!readOnly && canSkip(entry, index) && (
+                        <div 
+                          className={cn(
+                            'h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors',
+                            selectedTaxiId === entry.id 
+                              ? 'border-primary bg-primary' 
+                              : 'border-muted-foreground'
+                          )}
+                        >
+                          {selectedTaxiId === entry.id && (
+                            <div className="h-2 w-2 rounded-full bg-primary-foreground" />
+                          )}
+                        </div>
+                      )}
                       <div
                         className={cn(
                           'h-10 w-10 rounded-lg flex items-center justify-center font-bold',
@@ -184,17 +261,6 @@ export function QueueTableEnhanced({
                     
                     {!readOnly && (
                       <div className="flex gap-1">
-                        {canSkip(entry, index) && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => onSkip?.(entry.id)}
-                            disabled={isLoading}
-                            className="h-8 px-2"
-                          >
-                            <SkipForward className="h-4 w-4" />
-                          </Button>
-                        )}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button size="sm" variant="ghost" className="h-8 px-2">
@@ -234,6 +300,11 @@ export function QueueTableEnhanced({
           <table className="w-full">
             <thead>
               <tr className="border-b bg-muted/50">
+                {!readOnly && (
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-12">
+                    {t('select')}
+                  </th>
+                )}
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   <div className="flex items-center gap-2">
                     <Hash className="h-4 w-4" />
@@ -277,7 +348,7 @@ export function QueueTableEnhanced({
             <tbody className="divide-y">
               {activeEntries.length === 0 ? (
                 <tr>
-                  <td colSpan={readOnly ? 7 : 8} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={readOnly ? 7 : 9} className="px-4 py-12 text-center text-muted-foreground">
                     <Car className="h-12 w-12 mx-auto mb-3 opacity-50" />
                     <p>{t('noTaxisInQueue')}</p>
                   </td>
@@ -286,13 +357,34 @@ export function QueueTableEnhanced({
                 activeEntries.map((entry, index) => (
                   <tr
                     key={entry.id}
+                    onClick={() => !readOnly && canSkip(entry, index) && setSelectedTaxiId(entry.id)}
                     className={cn(
                       'transition-colors animate-slide-up',
+                      !readOnly && canSkip(entry, index) && 'cursor-pointer',
                       isNextInQueue(entry, index) ? 'queue-row-next' : statusColors[entry.status],
-                      !isNextInQueue(entry, index) && entry.status === 'waiting' && 'hover:bg-muted/50'
+                      !isNextInQueue(entry, index) && entry.status === 'waiting' && 'hover:bg-muted/50',
+                      selectedTaxiId === entry.id && 'ring-2 ring-primary ring-inset'
                     )}
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
+                    {!readOnly && (
+                      <td className="px-4 py-4">
+                        {canSkip(entry, index) && (
+                          <div 
+                            className={cn(
+                              'h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors',
+                              selectedTaxiId === entry.id 
+                                ? 'border-primary bg-primary' 
+                                : 'border-muted-foreground'
+                            )}
+                          >
+                            {selectedTaxiId === entry.id && (
+                              <div className="h-2 w-2 rounded-full bg-primary-foreground" />
+                            )}
+                          </div>
+                        )}
+                      </td>
+                    )}
                     <td className="px-4 py-4">
                       <div
                         className={cn(
@@ -341,18 +433,6 @@ export function QueueTableEnhanced({
                     {!readOnly && (
                       <td className="px-4 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          {canSkip(entry, index) && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => onSkip?.(entry.id)}
-                              disabled={isLoading}
-                              className="h-8"
-                            >
-                              <SkipForward className="h-4 w-4 mr-1" />
-                              {t('skipOne')}
-                            </Button>
-                          )}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button size="sm" variant="ghost" className="h-8">

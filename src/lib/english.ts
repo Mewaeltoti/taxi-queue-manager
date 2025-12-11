@@ -1,111 +1,227 @@
 // English translations for the Taxi Queue Manager
 export const t = {
-    // Common
-    appName: 'Taxi Queue Manager',
-    logout: 'Logout',
-    login: 'Login',
-    email: 'Email',
-    password: 'Password',
-    submit: 'Submit',
-    cancel: 'Cancel',
-    save: 'Save',
-    delete: 'Delete',
-    edit: 'Edit',
-    add: 'Add',
-    search: 'Search',
-    loading: 'Loading...',
-  
-    // Auth
-    loginTitle: 'Sign in to the system',
-    loginSubtitle: 'Enter your email and password',
-    invalidCredentials: 'Invalid email or password',
-  
-    // Roles
-    admin: 'Admin',
-    dispatcher: 'Dispatcher',
-  
-    // Queue
-    queue: 'Queue',
-    taxiQueue: 'Taxi Queue',
-    queueNumber: 'Number',
-    inQueue: 'In Queue',
-    waiting: 'Waiting',
-    next: 'Next',
-    noTaxisInQueue: 'No taxis in queue',
-  
-    // Taxi
-    taxi: 'Taxi',
-    taxis: 'Taxis',
-    plateNumber: 'Plate Number',
-    taxiType: 'Taxi Type',
-    registerTaxi: 'Register Taxi',
-    addToQueue: 'Add to Queue',
-  
-    // Driver
-    driver: 'Driver',
-    drivers: 'Drivers',
-    driverName: 'Driver Name',
-    phone: 'Phone Number',
-    licenseId: 'License ID',
-  
-    // Destination
-    destination: 'Destination',
-    destinations: 'Destinations',
-    selectDestination: 'Select Destination',
-  
-    // Dispatch
-    dispatch: 'Dispatch',
-    dispatchNext: 'Dispatch Next',
-    dispatched: 'Dispatched',
-    dispatchedToday: 'Dispatched Today',
-  
-    // Time
-    arrivalTime: 'Arrival Time',
-    waitingTime: 'Waiting Time',
-    justNow: 'Just Now',
-  
-    // Stats
-    totalDispatched: 'Total Dispatched',
-    peakHour: 'Peak Hour',
-    mostFrequentDest: 'Most Frequent Destination',
-    avgWaitTime: 'Average Wait Time',
-    activeDrivers: 'Active Drivers',
-  
-    // Reports
-    reports: 'Reports',
-    dailyReport: 'Daily Report',
-    exportCSV: 'Export CSV',
-    exportPDF: 'Export PDF',
-    dispatchLogs: 'Dispatch Logs',
-  
-    // Admin
-    adminPanel: 'Admin Panel',
-    dashboard: 'Dashboard',
-    users: 'Users',
-    fermatas: 'Fermatas',
-    manageDrivers: 'Manage Drivers',
-    manageTaxis: 'Manage Taxis',
-    manageUsers: 'Manage Dispatchers',
-    manageFermatas: 'Manage Fermatas',
-    viewAllQueues: 'View All Queues',
-    assignDispatchers: 'Assign Dispatchers',
-  
-    // Status
-    status: 'Status',
-    active: 'Active',
-    inactive: 'Inactive',
-  
-    // Taxi Types
-    sedan: 'Sedan',
-    suv: 'SUV',
-    van: 'Van',
-    minibus: 'Minibus',
-  
-    // Misc
-    queueManagement: 'Taxi Queue Management',
-    notifications: 'Notifications',
-    assignedDestinations: 'Assigned Destinations',
-    readOnly: 'Read Only',
-    allFermatas: 'All Fermatas',
-  };
-  
+  // Common
+  appName: 'Taxi Queue Manager',
+  logout: 'Logout',
+  login: 'Login',
+  email: 'Email',
+  password: 'Password',
+  submit: 'Submit',
+  cancel: 'Cancel',
+  save: 'Save',
+  delete: 'Delete',
+  edit: 'Edit',
+  add: 'Add',
+  search: 'Search',
+  loading: 'Loading...',
+  noDataToExport: 'No data to export',
+  exportCSVSuccess: 'CSV downloaded',
+
+  // Auth
+  loginTitle: 'Sign in to the system',
+  loginSubtitle: 'Enter your email and password',
+  invalidCredentials: 'Invalid email or password',
+
+  // Roles
+  admin: 'Admin',
+  dispatcher: 'Dispatcher',
+
+  // Queue
+  queue: 'Queue',
+  taxiQueue: 'Taxi Queue',
+  queueNumber: 'Number',
+  inQueue: 'In Queue',
+  waiting: 'Waiting',
+  next: 'Next',
+  noTaxisInQueue: 'No taxis in queue',
+  noTaxiInQueue: 'No taxi in queue',
+  noAssignedDestination: 'No assigned destination',
+  addedToQueue: 'added to queue',
+  dispatchedTo: 'dispatched to',
+
+  // Extended Statuses
+  skipped: 'Skipped',
+  notReady: 'Not Ready',
+  returned: 'Returned',
+  canceled: 'Canceled',
+
+  // Queue Actions
+  skip: 'Skip',
+  skipOne: 'Skip 1',
+  markNotReady: 'Mark Not Ready',
+  markReturned: 'Mark Returned',
+  removeFromQueue: 'Remove from Queue',
+
+  // Taxi
+  taxi: 'Taxi',
+  taxis: 'Taxis',
+  plateNumber: 'Plate Number',
+  taxiType: 'Taxi Type',
+  registerTaxi: 'Register Taxi',
+  addToQueue: 'Add to Queue',
+
+  // Driver
+  driver: 'Driver',
+  drivers: 'Drivers',
+  driverName: 'Driver Name',
+  phone: 'Phone Number',
+  licenseId: 'License ID',
+
+  // Destination
+  destination: 'Destination',
+  destinations: 'Destinations',
+  selectDestination: 'Select Destination',
+
+  // Dispatch
+  dispatch: 'Dispatch',
+  dispatchNext: 'Dispatch Next',
+  dispatched: 'Dispatched',
+  dispatchedToday: 'Dispatched Today',
+
+  // Time
+  arrivalTime: 'Arrival Time',
+  waitingTime: 'Waiting Time',
+  justNow: 'Just Now',
+  minutes: 'minutes',
+  hours: 'hours',
+
+  // Stats
+  totalDispatched: 'Total Dispatched',
+  peakHour: 'Peak Hour',
+  mostFrequentDest: 'Most Frequent Destination',
+  avgWaitTime: 'Average Wait Time',
+  activeDrivers: 'Active Drivers',
+
+  // Reports
+  reports: 'Reports',
+  dailyReport: 'Daily Report',
+  exportCSV: 'Export CSV',
+  exportPDF: 'Export PDF',
+  dispatchLogs: 'Dispatch Logs',
+  reportTaxi: 'Report Taxi',
+  reportCenter: 'Report Center',
+  openReports: 'Open Reports',
+  allReports: 'All Reports',
+
+  // Report Reasons
+  wrongFermata: 'Wrong Fermata',
+  wrongAssociation: 'Wrong Association',
+  unauthorizedDispatch: 'Unauthorized Dispatch',
+  excessiveSkips: 'Excessive Skips',
+  timeout: 'Timeout',
+  otherReason: 'Other',
+
+  // Report Status
+  open: 'Open',
+  inProgress: 'In Progress',
+  resolved: 'Resolved',
+  closed: 'Closed',
+
+  // Report Actions
+  closeReport: 'Close Report',
+  resolveReport: 'Resolve Report',
+  addComment: 'Add Comment',
+  suspendTaxi: 'Suspend Taxi',
+  suspendAssociation: 'Suspend Association',
+  autoGenerated: 'Auto Generated',
+
+  // Associations
+  association: 'Association',
+  associations: 'Associations',
+  manageAssociations: 'Manage Associations',
+  associationCode: 'Association Code',
+  authorized: 'Authorized',
+  unauthorized: 'Unauthorized',
+
+  // Admin
+  adminPanel: 'Admin Panel',
+  dashboard: 'Dashboard',
+  users: 'Users',
+  fermatas: 'Fermatas',
+  manageDrivers: 'Manage Drivers',
+  manageTaxis: 'Manage Taxis',
+  manageUsers: 'Manage Dispatchers',
+  manageFermatas: 'Manage Fermatas',
+  viewAllQueues: 'View All Queues',
+  assignDispatchers: 'Assign Dispatchers',
+  assignFermatas: 'Assign Fermatas',
+  selectDispatcher: 'Select Dispatcher',
+  allDispatchers: 'All Dispatchers',
+
+  // Activity & Audit Logs
+  activityLogs: 'Activity Logs',
+  auditLogs: 'Audit Logs',
+  action: 'Action',
+  actor: 'Actor',
+  timestamp: 'Timestamp',
+  oldValue: 'Old Value',
+  newValue: 'New Value',
+
+  // Audit Actions
+  queueCreated: 'Queue Created',
+  queueUpdated: 'Queue Updated',
+  queueSkipped: 'Queue Skipped',
+  queueDispatched: 'Queue Dispatched',
+  queueCanceled: 'Queue Canceled',
+  taxiNotReady: 'Taxi Not Ready',
+  taxiReturned: 'Taxi Returned',
+  unauthorizedAttempt: 'Unauthorized Attempt',
+  reportCreated: 'Report Created',
+  reportResolved: 'Report Resolved',
+  dispatcherAssigned: 'Dispatcher Assigned',
+  fermataCreated: 'Fermata Created',
+  driverCreated: 'Driver Created',
+  taxiCreated: 'Taxi Created',
+
+  // Filters
+  filterByFermata: 'Filter by Fermata',
+  filterByDispatcher: 'Filter by Dispatcher',
+  filterByTaxi: 'Filter by Taxi',
+  filterByStatus: 'Filter by Status',
+
+  // Status
+  status: 'Status',
+  active: 'Active',
+  inactive: 'Inactive',
+  suspended: 'Suspended',
+
+  // Taxi Types
+  sedan: 'Sedan',
+  suv: 'SUV',
+  van: 'Van',
+  minibus: 'Minibus',
+
+  // Skip Count
+  skipCount: 'Skip Count',
+  timesSkipped: 'times skipped',
+
+  // Skip Feature
+  select: 'Select',
+  selectedTaxi: 'Selected Taxi',
+  selectTaxiFromQueue: 'Select a taxi from the queue',
+  skipByPositions: 'Skip by (positions)',
+  skipTaxi: 'Skip Taxi',
+  taxiSkippedSuccessfully: 'Taxi skipped successfully',
+  markedNotReady: 'Marked as not ready',
+  markedReturned: 'Marked as returned',
+  removedFromQueue: 'Removed from queue',
+  reportSubmitted: 'Report submitted',
+
+  // Misc
+  queueManagement: 'Taxi Queue Management',
+  notifications: 'Notifications',
+  assignedDestinations: 'Assigned Destinations',
+  readOnly: 'Read Only',
+  allFermatas: 'All Fermatas',
+  allTaxis: 'All Taxis',
+  allStatuses: 'All Statuses',
+  description: 'Description',
+  comments: 'Comments',
+  createdAt: 'Created At',
+  resolvedAt: 'Resolved At',
+  resolvedBy: 'Resolved By',
+  noReports: 'No reports',
+  noLogs: 'No logs',
+  confirmAction: 'Confirm Action',
+  areYouSure: 'Are you sure?',
+};
