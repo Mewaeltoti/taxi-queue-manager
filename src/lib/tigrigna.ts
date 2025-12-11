@@ -206,7 +206,20 @@ export const t = {
   markedReturned: 'ተመሊሱ ተባሂሉ',
   removedFromQueue: 'ካብ ወረፋ ወጺኡ',
   reportSubmitted: 'ጸብጻብ ተላኢኹ',
-  
+  markedReady: 'ታክሲ ሕጂ ድልው ኣሎ',
+  readyNow: 'ሕጂ ድልው',
+  taxiNotReadyError: 'ታክሲ ድልው ኣይኮነን። ንምቕጻል ድልው ምባል የድሊ።',
+
+  // Date filters
+  todaysDispatchLog: 'ናይ ሎሚ መዝገብ ምልኣኽ',
+  dispatchTime: 'ሰዓት ምልኣኽ',
+  selectDate: 'ዕለት ምረጽ',
+  dateRange: 'ክልል ዕለት',
+  startDate: 'መጀመሪ ዕለት',
+  endDate: 'መወዳእታ ዕለት',
+  singleDate: 'ሓንቲ ዕለት',
+  applyFilter: 'ፍልተር ኣውዕል',
+
   // Misc
   queueManagement: 'ኣገልግሎት ወረፋ ታክሲ',
   notifications: 'ሓበሬታታት',
