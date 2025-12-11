@@ -206,6 +206,19 @@ export const t = {
   markedReturned: 'Marked as returned',
   removedFromQueue: 'Removed from queue',
   reportSubmitted: 'Report submitted',
+  markedReady: 'Taxi is now ready',
+  readyNow: 'Ready Now',
+  taxiNotReadyError: 'Taxi is not ready. Mark ready to continue.',
+
+  // Date filters
+  todaysDispatchLog: "Today's Dispatch Log",
+  dispatchTime: 'Dispatch Time',
+  selectDate: 'Select Date',
+  dateRange: 'Date Range',
+  startDate: 'Start Date',
+  endDate: 'End Date',
+  singleDate: 'Single Date',
+  applyFilter: 'Apply Filter',
 
   // Misc
   queueManagement: 'Taxi Queue Management',

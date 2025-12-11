@@ -113,8 +113,16 @@ const DispatcherDashboard = () => {
     toast.success(`${data.plateNumber} ${t('addedToQueue')}`);
   };
 
+  // Get the first waiting taxi (not not_ready)
+  const nextDispatchableTaxi = activeEntries.find(e => e.status === 'waiting' || e.status === 'returned');
+
   const handleDispatchNext = () => {
-    if (!nextTaxi) {
+    if (!nextDispatchableTaxi) {
+      // Check if there are taxis but all are not_ready
+      if (activeEntries.length > 0 && activeEntries[0].status === 'not_ready') {
+        toast.error(t('taxiNotReadyError'));
+        return;
+      }
       toast.error(t('noTaxiInQueue'));
       return;
     }
@@ -123,9 +131,23 @@ const DispatcherDashboard = () => {
       return;
     }
 
+    const newLog: DispatchLog = {
+      id: Date.now().toString(),
+      dispatchedAt: new Date(),
+      destination: primaryFermata,
+      queueEntry: {
+        id: nextDispatchableTaxi.id,
+        queueNumber: nextDispatchableTaxi.queue_number,
+        plateNumber: nextDispatchableTaxi.taxi?.plate_number || '',
+        driverName: nextDispatchableTaxi.taxi?.driver?.name || 'Unknown',
+        arrivalTime: new Date(nextDispatchableTaxi.arrival_time),
+        status: 'dispatched',
+      }
+    };
+
     setQueueEntries(entries => {
       const updated = entries.map(entry =>
-        entry.id === nextTaxi.id 
+        entry.id === nextDispatchableTaxi.id 
           ? { ...entry, status: 'dispatched' as const, dispatched_at: new Date().toISOString() } 
           : entry
       );
@@ -138,7 +160,8 @@ const DispatcherDashboard = () => {
       );
     });
 
-    toast.success(`${nextTaxi.taxi?.plate_number} ${t('dispatchedTo')} ${primaryFermata.code} - ${primaryFermata.name}`);
+    setDispatchLogs(logs => [newLog, ...logs]);
+    toast.success(`${nextDispatchableTaxi.taxi?.plate_number} ${t('dispatchedTo')} ${primaryFermata.code} - ${primaryFermata.name}`);
   };
 
   const handleSkip = (entryId: string, positions: number) => {
@@ -183,7 +206,7 @@ const DispatcherDashboard = () => {
     setIsLoading(false);
   };
 
-  const handleStatusChange = (entryId: string, status: 'not_ready' | 'returned' | 'canceled') => {
+  const handleStatusChange = (entryId: string, status: 'not_ready' | 'returned' | 'canceled' | 'waiting') => {
     setQueueEntries(entries => {
       const updated = entries.map(entry =>
         entry.id === entryId 
@@ -213,6 +236,7 @@ const DispatcherDashboard = () => {
       not_ready: t('markedNotReady'),
       returned: t('markedReturned'),
       canceled: t('removedFromQueue'),
+      waiting: t('markedReady'),
     };
     toast.success(statusMessages[status]);
   };
@@ -290,7 +314,7 @@ const DispatcherDashboard = () => {
             </Button>
             <Button
               onClick={handleDispatchNext}
-              disabled={!nextTaxi}
+              disabled={!nextDispatchableTaxi}
               className="dispatch-button flex-1 sm:flex-initial disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="h-4 w-4 mr-2" />
@@ -307,6 +331,39 @@ const DispatcherDashboard = () => {
           onReport={handleReport}
           isLoading={isLoading}
         />
+
+        {/* Today's Dispatch Log */}
+        {dispatchLogs.length > 0 && (
+          <div className="mt-8">
+            <h3 className="text-lg font-semibold mb-4">{t('todaysDispatchLog')}</h3>
+            <div className="bg-card rounded-xl border overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('plateNumber')}</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('driver')}</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('destination')}</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('dispatchTime')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {dispatchLogs.slice(0, 10).map(log => (
+                      <tr key={log.id} className="hover:bg-muted/30">
+                        <td className="px-4 py-3 font-medium">{log.queueEntry.plateNumber}</td>
+                        <td className="px-4 py-3">{log.queueEntry.driverName}</td>
+                        <td className="px-4 py-3">{log.destination.code} - {log.destination.name}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {log.dispatchedAt.toLocaleTimeString('am-ET', { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
 
       </main>
 

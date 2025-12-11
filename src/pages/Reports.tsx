@@ -9,6 +9,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import {
   Select,
@@ -24,7 +27,10 @@ const Reports = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
-  const [selectedDate] = useState(new Date());
+  const [dateMode, setDateMode] = useState<'single' | 'range'>('single');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedFermata, setSelectedFermata] = useState<string>('all');
   const [selectedDispatcher, setSelectedDispatcher] = useState<string>('all');
 
@@ -43,7 +49,24 @@ const Reports = () => {
       day: 'numeric',
     });
 
+  // Filter logs by date range
   const filteredLogs = mockDispatchLogs.filter(log => {
+    const logDate = new Date(log.dispatchedAt);
+    logDate.setHours(0, 0, 0, 0);
+    
+    let dateMatch = true;
+    if (dateMode === 'single') {
+      const selected = new Date(selectedDate);
+      selected.setHours(0, 0, 0, 0);
+      dateMatch = logDate.getTime() === selected.getTime();
+    } else {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      dateMatch = logDate >= start && logDate <= end;
+    }
+
     const fermataMatch =
       selectedFermata === 'all' || log.destination.id === selectedFermata;
 
@@ -51,7 +74,7 @@ const Reports = () => {
       selectedDispatcher === 'all' ||
       log.queueEntry.driverName === dispatchers.find(d => d.id === selectedDispatcher)?.name;
 
-    return fermataMatch && dispatcherMatch;
+    return dateMatch && fermataMatch && dispatcherMatch;
   });
 
   const filteredStats: DailyStats = {
@@ -117,9 +140,6 @@ const Reports = () => {
   
     toast.success(t('exportCSVSuccess'));
   };
-  
-
- 
 
   if (!user) return null;
 
@@ -144,7 +164,12 @@ const Reports = () => {
               <h1 className="text-2xl font-bold">{t('dailyReport')}</h1>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Calendar className="h-4 w-4" />
-                <span>{formatDate(selectedDate)}</span>
+                <span>
+                  {dateMode === 'single' 
+                    ? formatDate(new Date(selectedDate))
+                    : `${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}`
+                  }
+                </span>
               </div>
             </div>
           </div>
@@ -153,8 +178,56 @@ const Reports = () => {
               <FileDown className="h-4 w-4 mr-2" />
               {t('exportCSV')}
             </Button>
-            
           </div>
+        </div>
+
+        {/* Date Selection */}
+        <div className="bg-card rounded-xl border p-4 mb-6">
+          <Tabs value={dateMode} onValueChange={(v) => setDateMode(v as 'single' | 'range')}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="single">{t('singleDate')}</TabsTrigger>
+              <TabsTrigger value="range">{t('dateRange')}</TabsTrigger>
+            </TabsList>
+            <TabsContent value="single">
+              <div className="max-w-xs">
+                <Label htmlFor="single-date" className="text-sm font-medium mb-2 block">
+                  {t('selectDate')}
+                </Label>
+                <Input
+                  id="single-date"
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                />
+              </div>
+            </TabsContent>
+            <TabsContent value="range">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md">
+                <div>
+                  <Label htmlFor="start-date" className="text-sm font-medium mb-2 block">
+                    {t('startDate')}
+                  </Label>
+                  <Input
+                    id="start-date"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="end-date" className="text-sm font-medium mb-2 block">
+                    {t('endDate')}
+                  </Label>
+                  <Input
+                    id="end-date"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* Filters */}
@@ -202,7 +275,7 @@ const Reports = () => {
         <DispatchLogTable
           logs={filteredLogs}
           onExportCSV={exportCSV}
-                />
+        />
       </main>
     </div>
   );

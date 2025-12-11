@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Clock, Car, User, Hash, ArrowRight, SkipForward, AlertTriangle, RotateCcw, X, Flag } from 'lucide-react';
+import { Clock, Car, User, Hash, ArrowRight, SkipForward, AlertTriangle, RotateCcw, X, Flag, CheckCircle } from 'lucide-react';
 import { QueueEntry, QueueStatus } from '@/types/database';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +19,7 @@ interface QueueTableEnhancedProps {
   entries: QueueEntry[];
   onSkip?: (entryId: string, positions: number) => void;
   onDispatch?: (entryId: string) => void;
-  onStatusChange?: (entryId: string, status: 'not_ready' | 'returned' | 'canceled') => void;
+  onStatusChange?: (entryId: string, status: 'not_ready' | 'returned' | 'canceled' | 'waiting') => void;
   onReport?: (entryId: string, taxiId: string, reason: string, description?: string) => void;
   readOnly?: boolean;
   isLoading?: boolean;
@@ -261,6 +261,20 @@ export function QueueTableEnhanced({
                     
                     {!readOnly && (
                       <div className="flex gap-1">
+                        {entry.status === 'not_ready' && (
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="h-8 text-xs border-success text-success hover:bg-success/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onStatusChange?.(entry.id, 'waiting');
+                            }}
+                          >
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            {t('readyNow')}
+                          </Button>
+                        )}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button size="sm" variant="ghost" className="h-8 px-2">
@@ -268,10 +282,12 @@ export function QueueTableEnhanced({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => onStatusChange?.(entry.id, 'not_ready')}>
-                              <AlertTriangle className="h-4 w-4 mr-2" />
-                              {t('markNotReady')}
-                            </DropdownMenuItem>
+                            {entry.status !== 'not_ready' && (
+                              <DropdownMenuItem onClick={() => onStatusChange?.(entry.id, 'not_ready')}>
+                                <AlertTriangle className="h-4 w-4 mr-2" />
+                                {t('markNotReady')}
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem onClick={() => onStatusChange?.(entry.id, 'returned')}>
                               <RotateCcw className="h-4 w-4 mr-2" />
                               {t('markReturned')}
@@ -433,6 +449,20 @@ export function QueueTableEnhanced({
                     {!readOnly && (
                       <td className="px-4 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
+                          {entry.status === 'not_ready' && (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="h-8 text-xs border-success text-success hover:bg-success/10"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onStatusChange?.(entry.id, 'waiting');
+                              }}
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              {t('readyNow')}
+                            </Button>
+                          )}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button size="sm" variant="ghost" className="h-8">
@@ -440,10 +470,12 @@ export function QueueTableEnhanced({
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => onStatusChange?.(entry.id, 'not_ready')}>
-                                <AlertTriangle className="h-4 w-4 mr-2" />
-                                {t('markNotReady')}
-                              </DropdownMenuItem>
+                              {entry.status !== 'not_ready' && (
+                                <DropdownMenuItem onClick={() => onStatusChange?.(entry.id, 'not_ready')}>
+                                  <AlertTriangle className="h-4 w-4 mr-2" />
+                                  {t('markNotReady')}
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem onClick={() => onStatusChange?.(entry.id, 'returned')}>
                                 <RotateCcw className="h-4 w-4 mr-2" />
                                 {t('markReturned')}
