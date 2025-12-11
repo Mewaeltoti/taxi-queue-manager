@@ -215,10 +215,18 @@ const ReportCenter = () => {
                         )}
                       </div>
                       
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 text-sm">
+                      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 text-sm">
                         <div>
                           <span className="text-muted-foreground">{t('taxi')}: </span>
-                          <span className="font-medium">{report.taxi?.plate_number || 'N/A'}</span>
+                          <Badge variant="outline" className="font-mono">
+                            {report.taxi?.plate_number || 'N/A'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">{t('driverName')}: </span>
+                          <span className="font-medium">
+                            {report.taxi?.driver?.name || 'N/A'}
+                          </span>
                         </div>
                         <div>
                           <span className="text-muted-foreground">{t('fermatas')}: </span>

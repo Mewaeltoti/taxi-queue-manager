@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Dialog,
   DialogContent,
@@ -80,12 +80,9 @@ const Dispatchers = () => {
     toast.success(`t('dispatcherDeleted', { name: dispatcher.name })`);
   };
 
-  const handleFermataToggle = (fermataId: string) => {
-    setSelectedFermatas(prev =>
-      prev.includes(fermataId)
-        ? prev.filter(id => id !== fermataId)
-        : [...prev, fermataId]
-    );
+  // Single fermata selection - only one fermata per dispatcher
+  const handleFermataSelect = (fermataId: string) => {
+    setSelectedFermatas([fermataId]);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -96,8 +93,8 @@ const Dispatchers = () => {
       return;
     }
 
-    if (selectedFermatas.length === 0) {
-      toast.error(t('selectAtLeastOneFermata'));
+    if (selectedFermatas.length !== 1) {
+      toast.error(t('selectOneFermata'));
       return;
     }
 
@@ -189,8 +186,8 @@ const Dispatchers = () => {
               <CardContent>
                 <div className="space-y-2">
                   <p className="text-sm font-medium flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
-                    {t('assignedFermatas')}:
+                    <MapPin className="h-4 w-4 text-primary" />
+                    {t('assignedFermata')}:
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {getFermataNames(dispatcher.assignedFermatas).map((name, idx) => (
@@ -243,23 +240,24 @@ const Dispatchers = () => {
             </div>
             <div className="space-y-2">
               <Label>{t('fermataSelection')}</Label>
-              <div className="grid grid-cols-2 gap-2 p-3 border rounded-lg max-h-48 overflow-y-auto">
+              <p className="text-xs text-muted-foreground">{t('selectOneFermataHint')}</p>
+              <RadioGroup
+                value={selectedFermatas[0] || ''}
+                onValueChange={handleFermataSelect}
+                className="grid grid-cols-1 gap-2 p-3 border rounded-lg max-h-48 overflow-y-auto"
+              >
                 {mockFermatas.map(fermata => (
                   <div key={fermata.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={fermata.id}
-                      checked={selectedFermatas.includes(fermata.id)}
-                      onCheckedChange={() => handleFermataToggle(fermata.id)}
-                    />
-                    <label
+                    <RadioGroupItem value={fermata.id} id={fermata.id} />
+                    <Label
                       htmlFor={fermata.id}
                       className="text-sm font-medium leading-none cursor-pointer"
                     >
                       {fermata.code} - {fermata.name}
-                    </label>
+                    </Label>
                   </div>
                 ))}
-              </div>
+              </RadioGroup>
             </div>
             <div className="flex gap-3 pt-4">
               <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="flex-1">

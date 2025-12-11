@@ -147,6 +147,10 @@ export const t = {
   assignFermatas: 'ፈርማታ ምምዳብ',
   selectDispatcher: 'ላኢኺ ምረጽ',
   allDispatchers: 'ኩሎም ላኢኺታት',
+  assignedFermata: 'ዝተመደበ ፈርማታ',
+  selectOneFermata: 'ሓደ ፈርማታ ምረጽ',
+  selectOneFermataHint: 'ነፍሲ ወከፍ ላኢኺ ኣብ ሓደ ፈርማታ ጥራይ ክምደብ ይኽእል',
+  viewAllReports: 'ኩሎም ጸብጻባት ርአ',
   
   // Activity & Audit Logs
   activityLogs: 'መዝገብ ንጥፈታት',

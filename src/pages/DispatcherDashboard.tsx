@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Send, Car } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Plus, Send, Car, Download, FileText } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { QueueTableEnhanced } from '@/components/dispatcher/QueueTableEnhanced';
 import { RegisterTaxiModal } from '@/components/dispatcher/RegisterTaxiModal';
@@ -246,6 +246,39 @@ const DispatcherDashboard = () => {
     toast.success(t('reportSubmitted'));
   };
 
+  const exportTodaysLogToCSV = () => {
+    if (dispatchLogs.length === 0) {
+      toast.error(t('noDataToExport'));
+      return;
+    }
+
+    const headers = [
+      t('plateNumber'),
+      t('driverName'),
+      t('destination'),
+      t('dispatchTime'),
+    ];
+
+    const rows = dispatchLogs.map(log => [
+      log.queueEntry.plateNumber,
+      log.queueEntry.driverName,
+      `${log.destination.code} - ${log.destination.name}`,
+      log.dispatchedAt.toLocaleString('am-ET'),
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `dispatch-log-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    toast.success(t('exportCSVSuccess'));
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -335,8 +368,25 @@ const DispatcherDashboard = () => {
         {/* Today's Dispatch Log */}
         {dispatchLogs.length > 0 && (
           <div className="mt-8">
-            <h3 className="text-lg font-semibold mb-4">{t('todaysDispatchLog')}</h3>
-            <div className="bg-card rounded-xl border overflow-hidden">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                {t('todaysDispatchLog')}
+              </h3>
+              <div className="flex gap-2">
+                <Button onClick={exportTodaysLogToCSV} variant="outline" size="sm" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  {t('exportCSV')}
+                </Button>
+                <Link to="/dispatcher/reports">
+                  <Button variant="secondary" size="sm" className="gap-2">
+                    <FileText className="h-4 w-4" />
+                    {t('viewAllReports')}
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            <div className="glass-card overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
