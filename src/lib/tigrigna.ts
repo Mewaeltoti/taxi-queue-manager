@@ -195,6 +195,18 @@ export const t = {
   skipCount: 'ብዝሒ ምስጋር',
   timesSkipped: 'ግዜ ተሰጊሩ',
   
+  // Skip Feature
+  select: 'ምረጽ',
+  selectedTaxi: 'ዝተመረጸ ታክሲ',
+  selectTaxiFromQueue: 'ታክሲ ካብ ወረፋ ምረጽ',
+  skipByPositions: 'ብቦታ ስገር',
+  skipTaxi: 'ታክሲ ስገር',
+  taxiSkippedSuccessfully: 'ታክሲ ብዕዉት ተሰጊሩ',
+  markedNotReady: 'ድልው ኣይኮነን ተባሂሉ',
+  markedReturned: 'ተመሊሱ ተባሂሉ',
+  removedFromQueue: 'ካብ ወረፋ ወጺኡ',
+  reportSubmitted: 'ጸብጻብ ተላኢኹ',
+  
   // Misc
   queueManagement: 'ኣገልግሎት ወረፋ ታክሲ',
   notifications: 'ሓበሬታታት',

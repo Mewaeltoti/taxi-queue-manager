@@ -1,12 +1,13 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Send, Car } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
-import { QueueTable } from '@/components/dispatcher/QueueTable';
+import { QueueTableEnhanced } from '@/components/dispatcher/QueueTableEnhanced';
 import { RegisterTaxiModal } from '@/components/dispatcher/RegisterTaxiModal';
 import { Button } from '@/components/ui/button';
 import { mockQueueEntries, mockFermatas, mockDispatchLogs } from '@/data/mockData';
-import { QueueEntry, DispatchLog } from '@/types/taxi';
+import { QueueEntry as MockQueueEntry, DispatchLog } from '@/types/taxi';
+import { QueueEntry } from '@/types/database';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -17,9 +18,45 @@ const DispatcherDashboard = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
-  const [queueEntries, setQueueEntries] = useState<QueueEntry[]>(mockQueueEntries);
+  // Convert mock data to enhanced format
+  const [queueEntries, setQueueEntries] = useState<QueueEntry[]>(() => 
+    mockQueueEntries.map((entry, index) => ({
+      id: entry.id,
+      taxi_id: entry.id,
+      fermata_id: 'fermata-1',
+      queue_number: entry.queueNumber,
+      arrival_time: entry.arrivalTime.toISOString(),
+      status: entry.status as QueueEntry['status'],
+      skip_count: 0,
+      dispatcher_id: null,
+      dispatched_at: entry.dispatchedAt?.toISOString() || null,
+      last_skip_at: null,
+      created_at: entry.arrivalTime.toISOString(),
+      updated_at: entry.arrivalTime.toISOString(),
+      taxi: {
+        id: entry.id,
+        plate_number: entry.plateNumber,
+        type: 'sedan',
+        is_suspended: false,
+        driver_id: null,
+        association_id: null,
+        created_at: entry.arrivalTime.toISOString(),
+        updated_at: entry.arrivalTime.toISOString(),
+        driver: {
+          id: entry.id,
+          name: entry.driverName,
+          phone: null,
+          license_id: null,
+          association_id: null,
+          created_at: entry.arrivalTime.toISOString(),
+          updated_at: entry.arrivalTime.toISOString(),
+        }
+      }
+    }))
+  );
   const [dispatchLogs, setDispatchLogs] = useState<DispatchLog[]>(mockDispatchLogs);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -31,19 +68,46 @@ const DispatcherDashboard = () => {
   const assignedFermatas = mockFermatas.filter(f => user?.assignedFermatas?.includes(f.id));
   const primaryFermata = assignedFermatas[0];
 
-  const waitingEntries = queueEntries.filter(e => e.status === 'waiting');
-  const waitingCount = waitingEntries.length;
-  const nextTaxi = waitingEntries[0];
+  const activeEntries = queueEntries.filter(e => 
+    ['waiting', 'skipped', 'not_ready', 'returned'].includes(e.status)
+  );
+  const waitingCount = activeEntries.length;
+  const nextTaxi = activeEntries[0];
   const dispatchedToday = dispatchLogs.length;
 
   const handleRegisterTaxi = (data: { plateNumber: string; driverName: string; taxiType: string }) => {
     const newEntry: QueueEntry = {
       id: Date.now().toString(),
-      queueNumber: waitingCount + 1,
-      plateNumber: data.plateNumber,
-      driverName: data.driverName,
-      arrivalTime: new Date(),
+      taxi_id: Date.now().toString(),
+      fermata_id: primaryFermata?.id || 'fermata-1',
+      queue_number: waitingCount + 1,
+      arrival_time: new Date().toISOString(),
       status: 'waiting',
+      skip_count: 0,
+      dispatcher_id: user?.id || null,
+      dispatched_at: null,
+      last_skip_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      taxi: {
+        id: Date.now().toString(),
+        plate_number: data.plateNumber,
+        type: data.taxiType,
+        is_suspended: false,
+        driver_id: null,
+        association_id: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        driver: {
+          id: Date.now().toString(),
+          name: data.driverName,
+          phone: null,
+          license_id: null,
+          association_id: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+      }
     };
     setQueueEntries([...queueEntries, newEntry]);
     toast.success(`${data.plateNumber} ${t('addedToQueue')}`);
@@ -59,33 +123,103 @@ const DispatcherDashboard = () => {
       return;
     }
 
-    const dispatchedEntry: QueueEntry = {
-      ...nextTaxi,
-      status: 'dispatched',
-      dispatchedAt: new Date(),
-      destinationId: primaryFermata.id
-    };
-
-    const newLog: DispatchLog = {
-      id: Date.now().toString(),
-      queueEntry: dispatchedEntry,
-      destination: primaryFermata,
-      dispatchedAt: new Date(),
-    };
-
-    setDispatchLogs(prev => [newLog, ...prev]);
     setQueueEntries(entries => {
       const updated = entries.map(entry =>
-        entry.id === nextTaxi.id ? dispatchedEntry : entry
+        entry.id === nextTaxi.id 
+          ? { ...entry, status: 'dispatched' as const, dispatched_at: new Date().toISOString() } 
+          : entry
       );
-      // Renumber waiting taxis
+      // Renumber active entries
       let queueNum = 1;
       return updated.map(entry =>
-        entry.status === 'waiting' ? { ...entry, queueNumber: queueNum++ } : entry
+        ['waiting', 'skipped', 'not_ready', 'returned'].includes(entry.status) 
+          ? { ...entry, queue_number: queueNum++ } 
+          : entry
       );
     });
 
-    toast.success(`${nextTaxi.plateNumber} ${t('dispatchedTo')} ${primaryFermata.code} - ${primaryFermata.name}`);
+    toast.success(`${nextTaxi.taxi?.plate_number} ${t('dispatchedTo')} ${primaryFermata.code} - ${primaryFermata.name}`);
+  };
+
+  const handleSkip = (entryId: string, positions: number) => {
+    setIsLoading(true);
+    
+    setQueueEntries(entries => {
+      const activeOnly = entries.filter(e => 
+        ['waiting', 'skipped', 'not_ready', 'returned'].includes(e.status)
+      );
+      const inactiveEntries = entries.filter(e => 
+        !['waiting', 'skipped', 'not_ready', 'returned'].includes(e.status)
+      );
+
+      const currentIndex = activeOnly.findIndex(e => e.id === entryId);
+      if (currentIndex === -1 || currentIndex >= activeOnly.length - 1) {
+        return entries;
+      }
+
+      // Calculate new index (can't go beyond last position)
+      const newIndex = Math.min(currentIndex + positions, activeOnly.length - 1);
+      
+      // Remove from current position and insert at new position
+      const [movedEntry] = activeOnly.splice(currentIndex, 1);
+      const updatedEntry = { 
+        ...movedEntry, 
+        status: 'skipped' as const, 
+        skip_count: movedEntry.skip_count + 1,
+        last_skip_at: new Date().toISOString()
+      };
+      activeOnly.splice(newIndex, 0, updatedEntry);
+
+      // Renumber queue
+      const renumbered = activeOnly.map((entry, idx) => ({
+        ...entry,
+        queue_number: idx + 1
+      }));
+
+      return [...renumbered, ...inactiveEntries];
+    });
+
+    toast.success(t('taxiSkippedSuccessfully'));
+    setIsLoading(false);
+  };
+
+  const handleStatusChange = (entryId: string, status: 'not_ready' | 'returned' | 'canceled') => {
+    setQueueEntries(entries => {
+      const updated = entries.map(entry =>
+        entry.id === entryId 
+          ? { ...entry, status, updated_at: new Date().toISOString() } 
+          : entry
+      );
+      
+      // If canceled, renumber remaining active entries
+      if (status === 'canceled') {
+        const active = updated.filter(e => 
+          ['waiting', 'skipped', 'not_ready', 'returned'].includes(e.status)
+        );
+        const inactive = updated.filter(e => 
+          !['waiting', 'skipped', 'not_ready', 'returned'].includes(e.status)
+        );
+        const renumbered = active.map((entry, idx) => ({
+          ...entry,
+          queue_number: idx + 1
+        }));
+        return [...renumbered, ...inactive];
+      }
+      
+      return updated;
+    });
+
+    const statusMessages: Record<string, string> = {
+      not_ready: t('markedNotReady'),
+      returned: t('markedReturned'),
+      canceled: t('removedFromQueue'),
+    };
+    toast.success(statusMessages[status]);
+  };
+
+  const handleReport = (entryId: string, taxiId: string, reason: string, description?: string) => {
+    // TODO: Connect to Supabase to create report
+    toast.success(t('reportSubmitted'));
   };
 
   const handleLogout = () => {
@@ -103,7 +237,7 @@ const DispatcherDashboard = () => {
         onLogout={handleLogout}
       />
 
-      <main className="p-4 lg:p-6 max-w-[1200px] mx-auto">
+      <main className="p-4 lg:p-6 max-w-[1400px] mx-auto">
         {/* Assigned Fermata Badge */}
         <div className="mb-4">
           <p className="text-sm text-muted-foreground mb-2">{t('assignedDestinations')}:</p>
@@ -165,8 +299,14 @@ const DispatcherDashboard = () => {
           </div>
         </div>
 
-        {/* Queue Table */}
-        <QueueTable entries={queueEntries} />
+        {/* Enhanced Queue Table */}
+        <QueueTableEnhanced 
+          entries={queueEntries}
+          onSkip={handleSkip}
+          onStatusChange={handleStatusChange}
+          onReport={handleReport}
+          isLoading={isLoading}
+        />
 
       </main>
 
