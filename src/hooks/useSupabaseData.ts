@@ -304,7 +304,7 @@ export function useReports(filters?: {
       query = query.eq('dispatcher_id', filters.dispatcherId);
     }
     if (filters?.status && filters.status !== 'all') {
-      query = query.eq('status', filters.status);
+      query = query.eq('status', filters.status as 'open' | 'in_progress' | 'resolved' | 'closed');
     }
 
     const { data, error } = await query;
