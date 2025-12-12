@@ -103,6 +103,11 @@ function AppRoutes() {
           <Fermatas />
         </ProtectedRoute>
       } />
+       <Route path="/admin/dispatchers" element={
+        <ProtectedRoute adminOnly>
+          <Dispatchers />
+        </ProtectedRoute>
+      } />
       <Route path="/admin/drivers" element={
         <ProtectedRoute adminOnly>
           <Drivers />
