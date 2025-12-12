@@ -1,5 +1,18 @@
 // English translations for the Taxi Queue Manager
 export const t = {
+  // Admin KPIs
+  totalDispatchers: 'Total Dispatchers',
+  totalDestinations: 'Total Destinations',
+  taxisToday: 'Taxis Today',
+  dispatchesToday: 'Dispatches Today',
+  todayDispatches: "Today's Dispatches",
+  manageDispatchers: 'Manage Dispatchers',
+  // Dispatcher form
+  username: 'Username',
+  usernamePlaceholder: 'Enter username',
+  newPassword: 'New Password',
+  passwordPlaceholder: 'Enter password',
+  leaveBlankToKeep: 'Leave blank to keep current',
   // Common
   appName: 'Taxi Queue Manager',
   logout: 'Logout',

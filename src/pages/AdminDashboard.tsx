@@ -1,39 +1,54 @@
-import { useState, useContext } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Car, Send, Users, MapPin, FileText, Eye } from 'lucide-react';
+import { Car, Send, Users, MapPin, FileText, Download } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
-import { QueueTable } from '@/components/dispatcher/QueueTable';
 import { Button } from '@/components/ui/button';
-import { mockQueueEntries, mockFermatas, mockUsers } from '@/data/mockData';
+import { mockQueueEntries, mockFermatas, mockUsers, mockDispatchLogs } from '@/data/mockData';
 import { useAuth } from '@/contexts/AuthContext';
-import {  useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Badge } from '@/components/ui/badge';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const [selectedFermata, setSelectedFermata] = useState<string>('all');
 
   const waitingCount = mockQueueEntries.filter(e => e.status === 'waiting').length;
-  const dispatchedToday = mockQueueEntries.filter(e => e.status === 'dispatched').length + 12;
+  const dispatchedToday = mockDispatchLogs.length;
   const activeDispatchers = mockUsers.filter(u => u.role === 'dispatcher').length;
+  const totalFermatas = mockFermatas.length;
+
+  const formatTime = (date: Date) => date.toLocaleTimeString('am-ET', { hour: '2-digit', minute: '2-digit' });
+
+  const exportCSV = () => {
+    const headers = ['Plate Number', 'Driver', 'Destination', 'Dispatch Time'];
+    const rows = mockDispatchLogs.map(log => [
+      log.queueEntry.plateNumber,
+      log.queueEntry.driverName,
+      log.destination.name,
+      formatTime(log.dispatchedAt),
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dispatch-report-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+  };
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
-
-  const filteredQueue = selectedFermata === 'all'
-    ? mockQueueEntries
-    : mockQueueEntries.filter(e => e.destinationId === selectedFermata );
 
   if (!user) return null;
 
@@ -45,38 +60,16 @@ const AdminDashboard = () => {
         onLogout={handleLogout}
       />
 
-      <main className="p-4 lg:p-6 max-w-[1600px] mx-auto">
+      <main className="p-4 lg:p-6 max-w-[1200px] mx-auto">
         {/* Admin Role Badge */}
         <div className="mb-4">
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-            {t('admin')} - {t('viewAllQueues')}
+            {t('admin')}
           </Badge>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
-          <div className="stat-card">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-accent/10">
-                <Car className="h-5 w-5 text-accent" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{waitingCount}</p>
-                <p className="text-sm text-muted-foreground">{t('inQueue')}</p>
-              </div>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-success/10">
-                <Send className="h-5 w-5 text-success" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{dispatchedToday}</p>
-                <p className="text-sm text-muted-foreground">{t('dispatchedToday')}</p>
-              </div>
-            </div>
-          </div>
+        {/* KPI Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           <div className="stat-card">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">
@@ -84,50 +77,56 @@ const AdminDashboard = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold">{activeDispatchers}</p>
-                <p className="text-sm text-muted-foreground">{t('dispatcher')}</p>
+                <p className="text-sm text-muted-foreground">{t('totalDispatchers')}</p>
               </div>
             </div>
           </div>
-          <Link to="/admin/fermatas" className="stat-card hover:border-accent/50 transition-colors">
+          <div className="stat-card">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-warning/10">
-                <MapPin className="h-5 w-5 text-warning" />
+              <div className="p-2 rounded-lg bg-accent/10">
+                <MapPin className="h-5 w-5 text-accent" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{mockFermatas.length}</p>
-                <p className="text-sm text-muted-foreground">{t('fermatas')}</p>
+                <p className="text-2xl font-bold">{totalFermatas}</p>
+                <p className="text-sm text-muted-foreground">{t('totalDestinations')}</p>
               </div>
             </div>
-          </Link>
+          </div>
+          <div className="stat-card">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-success/10">
+                <Car className="h-5 w-5 text-success" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{waitingCount}</p>
+                <p className="text-sm text-muted-foreground">{t('taxisToday')}</p>
+              </div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-warning/10">
+                <Send className="h-5 w-5 text-warning" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{dispatchedToday}</p>
+                <p className="text-sm text-muted-foreground">{t('dispatchesToday')}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Admin Quick Actions */}
+        {/* Quick Actions */}
         <div className="mb-6 p-4 bg-muted/30 rounded-xl">
           <h3 className="font-medium mb-3">{t('adminPanel')}</h3>
           <div className="flex flex-wrap gap-2">
-            <Link to="/admin/users">
+            <Link to="/admin/dispatchers">
               <Button variant="outline" size="sm">
                 <Users className="h-4 w-4 mr-2" />
-                {t('manageUsers')}
+                {t('manageDispatchers')}
               </Button>
             </Link>
-            <Link to="/admin/fermatas">
-              <Button variant="outline" size="sm">
-                <MapPin className="h-4 w-4 mr-2" />
-                {t('manageFermatas')}
-              </Button>
-            </Link>
-            <Link to="/admin/drivers">
-              <Button variant="outline" size="sm">
-                {t('manageDrivers')}
-              </Button>
-            </Link>
-            <Link to="/admin/taxis">
-              <Button variant="outline" size="sm">
-                {t('manageTaxis')}
-              </Button>
-            </Link>
-            <Link to="/reports">
+            <Link to="/admin/reports">
               <Button variant="default" size="sm">
                 <FileText className="h-4 w-4 mr-2" />
                 {t('reports')}
@@ -136,37 +135,37 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Fermata Filter */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Eye className="h-5 w-5" />
-            {t('viewAllQueues')}
-          </h2>
-          <div className="w-full sm:w-64">
-            <Select value={selectedFermata} onValueChange={setSelectedFermata}>
-              <SelectTrigger>
-                <SelectValue placeholder={t('selectDestination')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('allFermatas')}</SelectItem>
-                {mockFermatas.map(f => (
-                  <SelectItem key={f.id} value={f.id}>
-                    {f.code} - {f.name}
-                  </SelectItem>
+        {/* Today's Dispatches Table */}
+        <div className="bg-card rounded-xl border p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">{t('todayDispatches')}</h2>
+            <Button variant="outline" size="sm" onClick={exportCSV}>
+              <Download className="h-4 w-4 mr-2" />
+              {t('downloadCSV')}
+            </Button>
+          </div>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('plateNumber')}</TableHead>
+                  <TableHead>{t('driverName')}</TableHead>
+                  <TableHead>{t('destination')}</TableHead>
+                  <TableHead>{t('dispatchTime')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {mockDispatchLogs.map((log) => (
+                  <TableRow key={log.id}>
+                    <TableCell className="font-mono">{log.queueEntry.plateNumber}</TableCell>
+                    <TableCell>{log.queueEntry.driverName}</TableCell>
+                    <TableCell>{log.destination.code} - {log.destination.name}</TableCell>
+                    <TableCell>{formatTime(log.dispatchedAt)}</TableCell>
+                  </TableRow>
                 ))}
-              </SelectContent>
-            </Select>
+              </TableBody>
+            </Table>
           </div>
-        </div>
-
-        {/* Queue Table - Read Only for Admin */}
-        <div className="relative">
-          <div className="relative top-3 right-2 z-10">
-            <Badge variant="secondary" className="text-xs">
-              {t('viewAllQueues')} ({t('readOnly')})
-            </Badge>
-          </div>
-          <QueueTable entries={filteredQueue} readOnly />
         </div>
       </main>
     </div>

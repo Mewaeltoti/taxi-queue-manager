@@ -1,5 +1,18 @@
 // Tigrigna translations for the Taxi Queue Manager
 export const t = {
+  // Admin KPIs
+  totalDispatchers: 'ጠቕላላ ዲስፓቸራት',
+  totalDestinations: 'ጠቕላላ መዓልቦታት',
+  taxisToday: 'ታክሲታት ሎሚ',
+  dispatchesToday: 'ዲስፓች ሎሚ',
+  todayDispatches: 'ናይ ሎሚ ዲስፓቻት',
+  manageDispatchers: 'ዲስፓቸራት ምሕደራ',
+  // Dispatcher form
+  username: 'ስም ተጠቃሚ',
+  usernamePlaceholder: 'ስም ተጠቃሚ ኣእቱ',
+  newPassword: 'ሓድሽ መሕለፊ ቃል',
+  passwordPlaceholder: 'መሕለፊ ቃል ኣእቱ',
+  leaveBlankToKeep: 'ንምሕላው ባዶ ግደፎ',
   // Common
   appName: 'ታክሲ ወረፋ ኣገልግሎት',
   logout: 'ውጻእ',
