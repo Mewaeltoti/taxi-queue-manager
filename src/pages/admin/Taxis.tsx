@@ -18,18 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { mockDrivers } from '@/data/mockData';
+import { mockDrivers, mockTaxis as initialMockTaxis } from '@/data/mockData';
 import { Taxi } from '@/types/taxi';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
-
-const mockTaxis: Taxi[] = [
-  { id: '1', plateNumber: 'TX-1234', type: 'sedan', driverId: '1' },
-  { id: '2', plateNumber: 'TX-5678', type: 'suv', driverId: '2' },
-  { id: '3', plateNumber: 'TX-9012', type: 'van', driverId: '3' },
-  { id: '4', plateNumber: 'TX-3456', type: 'minibus', driverId: '4' },
-];
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const taxiTypes = [
   { value: 'sedan', label: 'Sedan' },
@@ -38,24 +33,34 @@ const taxiTypes = [
   { value: 'minibus', label: 'Minibus' },
 ];
 
+
 const Taxis = () => {
-  const [taxis, setTaxis] = useState<Taxi[]>(mockTaxis);
+  const { user, logout } = useAuth();
+  const { t } = useLanguage();
+  const navigate = useNavigate();
+  
+  const [taxis, setTaxis] = useState<Taxi[]>(initialMockTaxis);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTaxi, setEditingTaxi] = useState<Taxi | null>(null);
   const [plateNumber, setPlateNumber] = useState('');
   const [type, setType] = useState('');
   const [driverId, setDriverId] = useState('');
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   const getDriverName = (id: string) => {
-    return mockDrivers.find(d => d.id === id)?.name || 'Unassigned';
+    return mockDrivers.find(d => d.id === id)?.name || t('inactive');
   };
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'sedan': return 'bg-blue-100 text-blue-700';
-      case 'suv': return 'bg-green-100 text-green-700';
-      case 'van': return 'bg-purple-100 text-purple-700';
-      case 'minibus': return 'bg-orange-100 text-orange-700';
+      case 'sedan': return 'bg-primary/10 text-primary';
+      case 'suv': return 'bg-accent/10 text-accent';
+      case 'van': return 'bg-secondary text-secondary-foreground';
+      case 'minibus': return 'bg-warning/10 text-warning';
       default: return 'bg-muted text-muted-foreground';
     }
   };
@@ -63,17 +68,17 @@ const Taxis = () => {
   const columns = [
     { 
       key: 'plateNumber' as keyof Taxi, 
-      label: 'Plate Number',
+      label: t('plateNumber'),
       render: (item: Taxi) => (
         <div className="flex items-center gap-2">
-          <Tag className="h-4 w-4 text-muted-foreground" />
-          <code className="font-semibold">{item.plateNumber}</code>
+          <Tag className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <code className="font-semibold text-sm">{item.plateNumber}</code>
         </div>
       )
     },
     { 
       key: 'type' as keyof Taxi, 
-      label: 'Type',
+      label: t('taxiType'),
       render: (item: Taxi) => (
         <Badge className={getTypeColor(item.type)}>
           {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
@@ -82,15 +87,15 @@ const Taxis = () => {
     },
     { 
       key: 'driverId' as keyof Taxi, 
-      label: 'Assigned Driver',
+      label: t('driver'),
       render: (item: Taxi) => (
         <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center">
+          <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
             <span className="text-primary font-medium text-xs">
               {getDriverName(item.driverId).split(' ').map(n => n[0]).join('')}
             </span>
           </div>
-          <span>{getDriverName(item.driverId)}</span>
+          <span className="text-sm truncate">{getDriverName(item.driverId)}</span>
         </div>
       )
     },
@@ -114,14 +119,14 @@ const Taxis = () => {
 
   const handleDelete = (taxi: Taxi) => {
     setTaxis(taxis.filter(t => t.id !== taxi.id));
-    toast.success(`Deleted taxi ${taxi.plateNumber}`);
+    toast.success(`${t('delete')}: ${taxi.plateNumber}`);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!plateNumber || !type || !driverId) {
-      toast.error('Please fill in all fields');
+      toast.error(t('fillAllFields'));
       return;
     }
 
@@ -129,7 +134,7 @@ const Taxis = () => {
       setTaxis(taxis.map(t => 
         t.id === editingTaxi.id ? { ...t, plateNumber, type: type as Taxi['type'], driverId } : t
       ));
-      toast.success('Taxi updated');
+      toast.success(t('save'));
     } else {
       const newTaxi: Taxi = {
         id: Date.now().toString(),
@@ -138,11 +143,13 @@ const Taxis = () => {
         driverId,
       };
       setTaxis([...taxis, newTaxi]);
-      toast.success('Taxi added');
+      toast.success(t('add'));
     }
 
     setIsModalOpen(false);
   };
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -176,28 +183,28 @@ const Taxis = () => {
       </main>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md mx-4">
           <DialogHeader>
             <DialogTitle>
-              {editingTaxi ? 'Edit Taxi' : 'Add Taxi'}
+              {editingTaxi ? t('edit') : t('add')} {t('taxi')}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 pt-2">
             <div className="space-y-2">
-              <Label htmlFor="plate">Plate Number</Label>
+              <Label htmlFor="plate">{t('plateNumber')}</Label>
               <Input
                 id="plate"
-                placeholder="e.g., TX-1234"
+                placeholder="TX-XXXX"
                 value={plateNumber}
                 onChange={(e) => setPlateNumber(e.target.value.toUpperCase())}
                 className="uppercase"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="type">Taxi Type</Label>
+              <Label htmlFor="type">{t('taxiType')}</Label>
               <Select value={type} onValueChange={setType}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
+                  <SelectValue placeholder={t('select')} />
                 </SelectTrigger>
                 <SelectContent>
                   {taxiTypes.map(t => (
@@ -207,10 +214,10 @@ const Taxis = () => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="driver">Assign Driver</Label>
+              <Label htmlFor="driver">{t('driver')}</Label>
               <Select value={driverId} onValueChange={setDriverId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select driver" />
+                  <SelectValue placeholder={t('select')} />
                 </SelectTrigger>
                 <SelectContent>
                   {mockDrivers.map(d => (
@@ -221,10 +228,10 @@ const Taxis = () => {
             </div>
             <div className="flex gap-3 pt-4">
               <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="flex-1">
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type="submit" className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground">
-                {editingTaxi ? 'Save Changes' : 'Add Taxi'}
+                {editingTaxi ? t('save') : t('add')}
               </Button>
             </div>
           </form>

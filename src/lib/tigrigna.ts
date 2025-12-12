@@ -254,4 +254,20 @@ export const t = {
   noLogs: 'መዝገብ የለን',
   confirmAction: 'ተግባር ኣረጋግጽ',
   areYouSure: 'ርግጸኛ ዲኻ?',
+  
+  // Additional Admin translations
+  filterByDestination: 'ብመድረሻ ፍልተር',
+  allDestinations: 'ኩሉ መድረሻታት',
+  noDispatchesFound: 'ዲስፓች ኣይተረኽበን',
+  dispatcherDescription: 'ኣካውንት ላኢኺታት ኣመሓድር',
+  fullName: 'ምሉእ ስም',
+  namePlaceholder: 'ምሉእ ስም ኣእቱ',
+  addDispatcher: 'ላኢኺ ወስኽ',
+  editDispatcher: 'ላኢኺ ኣስተካክል',
+  fillAllFields: 'ኩሉ ዝድለ ሓበሬታ ምልኣዮ',
+  dispatcherUpdated: 'ላኢኺ ብዕዉት ተቐይሩ',
+  dispatcherAdded: 'ላኢኺ ብዕዉት ተወሲኹ',
+  dispatcherDeleted: 'ላኢኺ ተደምሲሱ',
+  fermataSelection: 'ፈርማታ ምምራጽ',
+  downloadCSV: 'CSV ኣውርድ',
 };
