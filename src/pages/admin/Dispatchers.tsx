@@ -28,7 +28,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 interface Dispatcher {
   id: string;
   name: string;
-  email: string;
+  username: string;
+  password: string;
   assignedFermatas: string[];
 }
 
@@ -43,7 +44,8 @@ const Dispatchers = () => {
       .map(u => ({
         id: u.id,
         name: u.name,
-        email: u.email,
+        username: u.email.split('@')[0],
+        password: '****',
         assignedFermatas: u.assignedFermatas || [],
       }))
   );
@@ -51,7 +53,8 @@ const Dispatchers = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDispatcher, setEditingDispatcher] = useState<Dispatcher | null>(null);
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [selectedFermatas, setSelectedFermatas] = useState<string[]>([]);
 
   const handleLogout = () => {
@@ -62,7 +65,8 @@ const Dispatchers = () => {
   const handleAdd = () => {
     setEditingDispatcher(null);
     setName('');
-    setEmail('');
+    setUsername('');
+    setPassword('');
     setSelectedFermatas([]);
     setIsModalOpen(true);
   };
@@ -70,7 +74,8 @@ const Dispatchers = () => {
   const handleEdit = (dispatcher: Dispatcher) => {
     setEditingDispatcher(dispatcher);
     setName(dispatcher.name);
-    setEmail(dispatcher.email);
+    setUsername(dispatcher.username);
+    setPassword('');
     setSelectedFermatas(dispatcher.assignedFermatas);
     setIsModalOpen(true);
   };
@@ -88,7 +93,12 @@ const Dispatchers = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name || !email) {
+    if (!name || !username) {
+      toast.error(t('fillAllFields'));
+      return;
+    }
+
+    if (!editingDispatcher && !password) {
       toast.error(t('fillAllFields'));
       return;
     }
@@ -101,7 +111,7 @@ const Dispatchers = () => {
     if (editingDispatcher) {
       setDispatchers(dispatchers.map(d =>
         d.id === editingDispatcher.id
-          ? { ...d, name, email, assignedFermatas: selectedFermatas }
+          ? { ...d, name, username, password: password || d.password, assignedFermatas: selectedFermatas }
           : d
       ));
       toast.success(t('dispatcherUpdated'));
@@ -109,7 +119,8 @@ const Dispatchers = () => {
       const newDispatcher: Dispatcher = {
         id: Date.now().toString(),
         name,
-        email,
+        username,
+        password,
         assignedFermatas: selectedFermatas,
       };
       setDispatchers([...dispatchers, newDispatcher]);
@@ -170,7 +181,7 @@ const Dispatchers = () => {
                     </div>
                     <div>
                       <CardTitle className="text-base">{dispatcher.name}</CardTitle>
-                      <p className="text-sm text-muted-foreground">{dispatcher.email}</p>
+                      <p className="text-sm text-muted-foreground">@{dispatcher.username}</p>
                     </div>
                   </div>
                   <Button
@@ -229,13 +240,22 @@ const Dispatchers = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">{t('email')}</Label>
+              <Label htmlFor="username">{t('username')}</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder={t('emailPlaceholder')}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="username"
+                placeholder={t('usernamePlaceholder')}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">{editingDispatcher ? t('newPassword') : t('password')}</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder={editingDispatcher ? t('leaveBlankToKeep') : t('passwordPlaceholder')}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
             <div className="space-y-2">
