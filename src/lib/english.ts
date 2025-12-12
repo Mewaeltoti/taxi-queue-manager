@@ -254,4 +254,20 @@ export const t = {
   noLogs: 'No logs',
   confirmAction: 'Confirm Action',
   areYouSure: 'Are you sure?',
+  
+  // Additional Admin translations
+  filterByDestination: 'Filter by Destination',
+  allDestinations: 'All Destinations',
+  noDispatchesFound: 'No dispatches found',
+  dispatcherDescription: 'Manage dispatcher accounts',
+  fullName: 'Full Name',
+  namePlaceholder: 'Enter full name',
+  addDispatcher: 'Add Dispatcher',
+  editDispatcher: 'Edit Dispatcher',
+  fillAllFields: 'Please fill all required fields',
+  dispatcherUpdated: 'Dispatcher updated successfully',
+  dispatcherAdded: 'Dispatcher added successfully',
+  dispatcherDeleted: 'Dispatcher deleted',
+  fermataSelection: 'Fermata Selection',
+  downloadCSV: 'Download CSV',
 };
