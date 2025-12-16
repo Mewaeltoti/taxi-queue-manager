@@ -24,30 +24,62 @@ interface RegisterTaxiModalProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: { plateNumber: string; driverName: string; taxiType: string }) => void;
 }
+function validateTaxiForm(
+  plateNumber: string,
+  driverName: string,
+  taxiType: string,
+  t: (key: string) => string
+) {
+  if (!plateNumber || !driverName || !taxiType) {
+    return t('fillAllFields');
+  }
+
+  if (plateNumber.length < 3) {
+    return t('invalidPlate');
+  }
+
+  return null;
+}
 
 export function RegisterTaxiModal({ open, onOpenChange, onSubmit }: RegisterTaxiModalProps) {
   const [plateNumber, setPlateNumber] = useState('');
   const [driverName, setDriverName] = useState('');
   const [taxiType, setTaxiType] = useState('');
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { t } = useLanguage(); // <— get translations from context
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!plateNumber || !driverName || !taxiType) {
-      toast.error(t('fillAllFields')); // replace hardcoded Amharic
+
+    const error = validateTaxiForm(
+      plateNumber,
+      driverName,
+      taxiType,
+      t
+    );
+
+    if (error) {
+      toast.error(error);
       return;
     }
 
-    onSubmit({ plateNumber, driverName, taxiType });
-    setPlateNumber('');
-    setDriverName('');
-    setTaxiType('');
-    onOpenChange(false);
-    toast.success(`${t('taxi')} ${plateNumber} ${t('addedToQueue')}`);
-  };
+    try {
+      setIsSubmitting(true);
 
+      await onSubmit({ plateNumber, driverName, taxiType });
+
+      setPlateNumber('');
+      setDriverName('');
+      setTaxiType('');
+      onOpenChange(false);
+
+      toast.success(`${t('taxi')} ${plateNumber} ${t('addedToQueue')}`);
+    } catch (err) {
+      toast.error(t('failedToRegisterTaxi'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -105,19 +137,20 @@ export function RegisterTaxiModal({ open, onOpenChange, onSubmit }: RegisterTaxi
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => onOpenChange(false)}
               className="flex-1"
             >
               {t('cancel')}
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
+              disabled={isSubmitting}
               className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground"
             >
-              {t('addToQueue')}
+              {isSubmitting ? t('saving') : t('addToQueue')}
             </Button>
           </div>
         </form>

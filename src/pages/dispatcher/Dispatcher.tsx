@@ -20,19 +20,32 @@ export default function DispatcherPage() {
 
   const nextTaxi = queueEntries.find(e => e.status === 'waiting');
 
-  const handleRegisterTaxi = (data: { plateNumber: string; driverName: string; taxiType: string }) => {
+  const handleRegisterTaxi = async (data: {
+    plateNumber: string;
+    driverName: string;
+    taxiType: string;
+  }) => {
+    // Simulate API delay (remove when backend is ready)
+    await new Promise(res => setTimeout(res, 300));
+
+    const waitingCount = queueEntries.filter(e => e.status === 'waiting').length;
+
     const newEntry: QueueEntry = {
       id: Date.now().toString(),
-      queueNumber: queueEntries.length + 1,
+      queueNumber: waitingCount + 1,
       plateNumber: data.plateNumber,
       driverName: data.driverName,
       arrivalTime: new Date(),
       status: 'waiting',
     };
-    setQueueEntries([...queueEntries, newEntry]);
-    setIsRegisterModalOpen(false);
-    toast.success(`t('taxiRegistered', { plate: data.plateNumber })`);
+
+    setQueueEntries(prev => [...prev, newEntry]);
+
+    toast.success(
+      `${t('taxiRegistered')} ${data.plateNumber}`
+    );
   };
+
 
   const handleDispatchNext = () => {
     if (!nextTaxi) {
@@ -50,8 +63,8 @@ export default function DispatcherPage() {
         entry.id === nextTaxi.id
           ? { ...entry, status: 'dispatched', destinationId: selectedDestination, dispatchedAt: new Date() }
           : entry.status === 'waiting'
-          ? { ...entry, queueNumber: queueNum++ }
-          : entry
+            ? { ...entry, queueNumber: queueNum++ }
+            : entry
       );
     });
 

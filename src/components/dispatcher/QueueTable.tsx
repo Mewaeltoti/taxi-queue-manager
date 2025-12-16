@@ -6,12 +6,16 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 interface QueueTableProps {
   entries: QueueEntry[];
+  /**
+   * Callback function triggered when a taxi is dispatched.
+   * @param id - The unique identifier of the dispatched taxi.
+   */
   onDispatch?: (id: string) => void;
   readOnly?: boolean;
 }
 
 export function QueueTable({ entries, readOnly = false }: QueueTableProps) {
-  const { t } = useLanguage(); // ✅ Use t from context
+  const { t } = useLanguage(); 
   const waitingEntries = entries.filter(e => e.status === 'waiting');
 
   const formatDuration = (arrivalTime: Date): string => {
