@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AdminSidebarProps {
   currentPage: string;
@@ -16,14 +17,17 @@ interface AdminSidebarProps {
 
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/' },
-  { id: 'fermatas', label: 'Fermatas', icon: MapPin, path: '/admin/fermatas' },
-  { id: 'drivers', label: 'Drivers', icon: Users, path: '/admin/drivers' },
-  { id: 'taxis', label: 'Taxis', icon: Car, path: '/admin/taxis' },
-  { id: 'users', label: 'Users', icon: UserCog, path: '/admin/users' },
+  { id: 'fermatas', label: 'Fermatas', icon: MapPin, path: '/admin/fermatas', adminOnly: true },
+  { id: 'drivers', label: 'Drivers', icon: Users, path: '/admin/drivers', adminOnly: true },
+  { id: 'taxis', label: 'Taxis', icon: Car, path: '/admin/taxis', adminOnly: true },
+  { id: 'users', label: 'Users', icon: UserCog, path: '/admin/users', adminOnly: true },
   { id: 'reports', label: 'Reports', icon: BarChart3, path: '/reports' },
 ];
 
 export function AdminSidebar({ currentPage }: AdminSidebarProps) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   return (
     <aside className="w-64 bg-sidebar min-h-screen border-r border-sidebar-border">
       <div className="p-4 border-b border-sidebar-border">
@@ -39,7 +43,7 @@ export function AdminSidebar({ currentPage }: AdminSidebarProps) {
       </div>
 
       <nav className="p-3 space-y-1">
-        {menuItems.map((item) => (
+        {menuItems.filter(item => !item.adminOnly || isAdmin).map((item) => (
           <NavLink
             key={item.id}
             to={item.path}

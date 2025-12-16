@@ -138,6 +138,12 @@ const AdminDashboard = () => {
                 {t('manageDispatchers')}
               </Button>
             </Link>
+            <Link to="/admin/fermatas">
+              <Button variant="outline" size="sm">
+                <Users className="h-4 w-4 mr-2" />
+                {t('manageFermatas')}
+              </Button>
+            </Link>
             <Link to="/admin/drivers">
               <Button variant="outline" size="sm">
                 <UserPlus className="h-4 w-4 mr-2" />

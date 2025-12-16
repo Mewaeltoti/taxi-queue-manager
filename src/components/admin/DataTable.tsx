@@ -1,6 +1,7 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Pencil, Trash2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface Column<T> {
   key: keyof T | string;
@@ -27,6 +28,8 @@ export function DataTable<T extends { id: string }>({
   onDelete,
   icon,
 }: DataTableProps<T>) {
+  const [search, setSearch] = useState('');
+
   const getValue = (item: T, key: string): ReactNode => {
     const keys = key.split('.');
     let value: unknown = item;
@@ -36,20 +39,35 @@ export function DataTable<T extends { id: string }>({
     return value as ReactNode;
   };
 
+  const filteredData = data.filter(item => 
+    columns.some(col => {
+      const val = getValue(item, String(col.key))?.toString().toLowerCase() || '';
+      return val.includes(search.toLowerCase());
+    })
+  );
+
   return (
     <div className="bg-card rounded-xl border">
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-2">
           {icon}
           <h3 className="font-semibold">{title}</h3>
-          <span className="text-sm text-muted-foreground">({data.length})</span>
+          <span className="text-sm text-muted-foreground">({filteredData.length})</span>
         </div>
-        {onAdd && (
-          <Button onClick={onAdd} size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-            <Plus className="h-4 w-4 mr-1" />
-            Add New
-          </Button>
-        )}
+        <div className="flex gap-2">
+          <Input 
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-40 sm:w-64"
+          />
+          {onAdd && (
+            <Button onClick={onAdd} size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+              <Plus className="h-4 w-4 mr-1" />
+              Add New
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -65,21 +83,19 @@ export function DataTable<T extends { id: string }>({
                 </th>
               ))}
               {(onEdit || onDelete) && (
-                <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
               )}
             </tr>
           </thead>
           <tbody className="divide-y">
-            {data.length === 0 ? (
+            {filteredData.length === 0 ? (
               <tr>
                 <td colSpan={columns.length + 1} className="px-4 py-8 text-center text-muted-foreground">
                   No data available
                 </td>
               </tr>
             ) : (
-              data.map((item) => (
+              filteredData.map((item) => (
                 <tr key={item.id} className="hover:bg-muted/30 transition-colors">
                   {columns.map((col) => (
                     <td key={String(col.key)} className="px-4 py-3">

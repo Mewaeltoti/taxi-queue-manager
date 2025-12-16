@@ -118,24 +118,7 @@ export function RegisterTaxiModal({ open, onOpenChange, onSubmit }: RegisterTaxi
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="type" className="flex items-center gap-2">
-              <Car className="h-4 w-4" />
-              {t('taxiType')}
-            </Label>
-            <Select value={taxiType} onValueChange={setTaxiType}>
-              <SelectTrigger>
-                <SelectValue placeholder={t('selectTaxiType')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sedan">{t('sedan')}</SelectItem>
-                <SelectItem value="suv">{t('suv')}</SelectItem>
-                <SelectItem value="van">{t('van')}</SelectItem>
-                <SelectItem value="minibus">{t('minibus')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
+         
           <div className="flex gap-3 pt-4">
             <Button
               type="button"

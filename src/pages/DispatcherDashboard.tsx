@@ -359,7 +359,7 @@ const DispatcherDashboard = () => {
         {/* Enhanced Queue Table */}
         <QueueTableEnhanced 
           entries={queueEntries}
-          onSkip={handleSkip}
+          
           onStatusChange={handleStatusChange}
           onReport={handleReport}
           isLoading={isLoading}

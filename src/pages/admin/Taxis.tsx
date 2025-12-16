@@ -26,12 +26,6 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-const taxiTypes = [
-  { value: 'sedan', label: 'Sedan' },
-  { value: 'suv', label: 'SUV' },
-  { value: 'van', label: 'Van' },
-  { value: 'minibus', label: 'Minibus' },
-];
 
 
 const Taxis = () => {
@@ -55,15 +49,7 @@ const Taxis = () => {
     return mockDrivers.find(d => d.id === id)?.name || t('inactive');
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'sedan': return 'bg-primary/10 text-primary';
-      case 'suv': return 'bg-accent/10 text-accent';
-      case 'van': return 'bg-secondary text-secondary-foreground';
-      case 'minibus': return 'bg-warning/10 text-warning';
-      default: return 'bg-muted text-muted-foreground';
-    }
-  };
+ 
 
   const columns = [
     { 
@@ -76,15 +62,7 @@ const Taxis = () => {
         </div>
       )
     },
-    { 
-      key: 'type' as keyof Taxi, 
-      label: t('taxiType'),
-      render: (item: Taxi) => (
-        <Badge className={getTypeColor(item.type)}>
-          {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
-        </Badge>
-      )
-    },
+    
     { 
       key: 'driverId' as keyof Taxi, 
       label: t('driver'),
@@ -112,7 +90,7 @@ const Taxis = () => {
   const handleEdit = (taxi: Taxi) => {
     setEditingTaxi(taxi);
     setPlateNumber(taxi.plateNumber);
-    setType(taxi.type);
+    
     setDriverId(taxi.driverId);
     setIsModalOpen(true);
   };
@@ -132,14 +110,14 @@ const Taxis = () => {
 
     if (editingTaxi) {
       setTaxis(taxis.map(t => 
-        t.id === editingTaxi.id ? { ...t, plateNumber, type: type as Taxi['type'], driverId } : t
+        t.id === editingTaxi.id ? { ...t, plateNumber,  driverId } : t
       ));
       toast.success(t('save'));
     } else {
       const newTaxi: Taxi = {
         id: Date.now().toString(),
         plateNumber,
-        type: type as Taxi['type'],
+       
         driverId,
       };
       setTaxis([...taxis, newTaxi]);
@@ -200,19 +178,7 @@ const Taxis = () => {
                 className="uppercase"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="type">{t('taxiType')}</Label>
-              <Select value={type} onValueChange={setType}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t('select')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {taxiTypes.map(t => (
-                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+           
             <div className="space-y-2">
               <Label htmlFor="driver">{t('driver')}</Label>
               <Select value={driverId} onValueChange={setDriverId}>

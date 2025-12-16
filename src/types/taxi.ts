@@ -1,7 +1,7 @@
 export interface Taxi {
   id: string;
   plateNumber: string;
-  type: 'sedan' | 'suv' | 'van' | 'minibus';
+ 
   driverId: string;
 }
 
