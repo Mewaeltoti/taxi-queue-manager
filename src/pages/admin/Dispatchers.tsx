@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UserCog, ArrowLeft, MapPin, Plus, Trash2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
@@ -6,31 +6,27 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { mockUsers, mockFermatas } from '@/data/mockData';
 import { useAuth } from '@/contexts/AuthContext';
-
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 
+// Types compatible with your DB
 interface Dispatcher {
   id: string;
   name: string;
   username: string;
-  password: string;
-  assignedFermatas: string[];
+  password?: string;
+  assigned_fermata_ids: string[]; // Matches table def
+}
+
+interface Fermata {
+  id: string;
+  code: string;
+  name: string;
 }
 
 const Dispatchers = () => {
@@ -38,18 +34,8 @@ const Dispatchers = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
 
-  const [dispatchers, setDispatchers] = useState<Dispatcher[]>(
-    mockUsers
-      .filter(u => u.role === 'dispatcher')
-      .map(u => ({
-        id: u.id,
-        name: u.name,
-        username: u.email.split('@')[0],
-        password: '****',
-        assignedFermatas: u.assignedFermatas || [],
-      }))
-  );
-
+  const [dispatchers, setDispatchers] = useState<Dispatcher[]>([]);
+  const [fermatas, setFermatas] = useState<Fermata[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDispatcher, setEditingDispatcher] = useState<Dispatcher | null>(null);
   const [name, setName] = useState('');
@@ -57,11 +43,28 @@ const Dispatchers = () => {
   const [password, setPassword] = useState('');
   const [selectedFermatas, setSelectedFermatas] = useState<string[]>([]);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  // --- Supabase Fetch ---
+  useEffect(() => {
+    (async () => {
+      // Load dispatchers
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('role', 'dispatcher');
+      if (!error && data) setDispatchers(data.map((u) => ({
+        ...u,
+        username: u.email.split('@')[0],
+        password: '****', // password is never fetched
+        assigned_fermata_ids: u.assigned_fermata_ids || [],
+      })));
 
+      // Load fermatas
+      const { data: fermataData, error: fermataError } = await supabase.from('fermatas').select('*');
+      if (!fermataError && fermataData) setFermatas(fermataData);
+    })();
+  }, []);
+
+  // --- CRUD methods ---
   const handleAdd = () => {
     setEditingDispatcher(null);
     setName('');
@@ -76,54 +79,87 @@ const Dispatchers = () => {
     setName(dispatcher.name);
     setUsername(dispatcher.username);
     setPassword('');
-    setSelectedFermatas(dispatcher.assignedFermatas);
+    setSelectedFermatas(dispatcher.assigned_fermata_ids);
     setIsModalOpen(true);
   };
 
-  const handleDelete = (dispatcher: Dispatcher) => {
-    setDispatchers(dispatchers.filter(d => d.id !== dispatcher.id));
-    toast.success(`t('dispatcherDeleted', { name: dispatcher.name })`);
+  const handleDelete = async (dispatcher: Dispatcher) => {
+    // Soft delete: set 'deleted' flag or hard delete
+    const { error } = await supabase.from('users').delete().eq('id', dispatcher.id);
+    if (!error) {
+      setDispatchers(dispatchers.filter(d => d.id !== dispatcher.id));
+      toast.success(`${t('dispatcherDeleted')}: ${dispatcher.name}`)
+    } else {
+      toast.error(error.message);
+    }
   };
 
-  // Single fermata selection - only one fermata per dispatcher
+  // Only one fermata per dispatcher
   const handleFermataSelect = (fermataId: string) => {
     setSelectedFermatas([fermataId]);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!name || !username) {
       toast.error(t('fillAllFields'));
       return;
     }
-
     if (!editingDispatcher && !password) {
       toast.error(t('fillAllFields'));
       return;
     }
-
     if (selectedFermatas.length !== 1) {
       toast.error(t('selectOneFermata'));
       return;
     }
 
+    // "users" DB expects: email, name, role, assigned_fermata_ids, password (if new)
+    let email = username.includes('@') ? username : username + '@taxi.com';
+
     if (editingDispatcher) {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          name,
+          email,
+          assigned_fermata_ids: selectedFermatas,
+          // password: password ? password : undefined, // implement password update if needed
+        })
+        .eq('id', editingDispatcher.id);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
       setDispatchers(dispatchers.map(d =>
         d.id === editingDispatcher.id
-          ? { ...d, name, username, password: password || d.password, assignedFermatas: selectedFermatas }
+          ? { ...d, name, username, assigned_fermata_ids: selectedFermatas }
           : d
       ));
       toast.success(t('dispatcherUpdated'));
     } else {
-      const newDispatcher: Dispatcher = {
-        id: Date.now().toString(),
+      const { data, error } = await supabase
+        .from('users')
+        .insert([{
+          email,
+          name,
+          role: 'dispatcher',
+          assigned_fermata_ids: selectedFermatas,
+          // password, // handle securely in production!
+        }])
+        .select();
+      if (error || !data) {
+        toast.error(error?.message || 'Failed to add');
+        return;
+      }
+      setDispatchers([...dispatchers, {
+        id: data[0].id,
         name,
         username,
         password,
-        assignedFermatas: selectedFermatas,
-      };
-      setDispatchers([...dispatchers, newDispatcher]);
+        assigned_fermata_ids: selectedFermatas,
+      }]);
       toast.success(t('dispatcherAdded'));
     }
 
@@ -132,13 +168,19 @@ const Dispatchers = () => {
 
   const getFermataNames = (fermataIds: string[]) => {
     return fermataIds.map(id => {
-      const fermata = mockFermatas.find(f => f.id === id);
+      const fermata = fermatas.find(f => f.id === id);
       return fermata ? `${fermata.code} - ${fermata.name}` : id;
     });
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   if (!user) return null;
 
+  // ----- UI remains (unchanged, except for mock -> fermatas) ------
   return (
     <div className="min-h-screen bg-background">
       <Header
@@ -160,15 +202,11 @@ const Dispatchers = () => {
               <p className="text-muted-foreground">{t('dispatcherDescription')}</p>
             </div>
           </div>
-          <Button
-            onClick={handleAdd}
-            className="w-full sm:w-auto flex-1 sm:flex-initial"
-          >
+          <Button onClick={handleAdd} className="w-full sm:w-auto flex-1 sm:flex-initial">
             <Plus className="h-4 w-4 mr-2" />
             {t('addDispatcher')}
           </Button>
         </div>
-
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {dispatchers.map(dispatcher => (
@@ -201,7 +239,7 @@ const Dispatchers = () => {
                     {t('assignedFermata')}:
                   </p>
                   <div className="flex flex-wrap gap-1">
-                    {getFermataNames(dispatcher.assignedFermatas).map((name, idx) => (
+                    {getFermataNames(dispatcher.assigned_fermata_ids || []).map((name, idx) => (
                       <Badge key={idx} variant="secondary" className="text-xs">
                         {name}
                       </Badge>
@@ -232,47 +270,24 @@ const Dispatchers = () => {
           <form onSubmit={handleSubmit} className="space-y-4 pt-2">
             <div className="space-y-2">
               <Label htmlFor="name">{t('fullName')}</Label>
-              <Input
-                id="name"
-                placeholder={t('namePlaceholder')}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
+              <Input id="name" placeholder={t('namePlaceholder')} value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="username">{t('username')}</Label>
-              <Input
-                id="username"
-                placeholder={t('usernamePlaceholder')}
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
+              <Input id="username" placeholder={t('usernamePlaceholder')} value={username} onChange={(e) => setUsername(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">{editingDispatcher ? t('newPassword') : t('password')}</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder={editingDispatcher ? t('leaveBlankToKeep') : t('passwordPlaceholder')}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <Input id="password" type="password" placeholder={editingDispatcher ? t('leaveBlankToKeep') : t('passwordPlaceholder')} value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>{t('fermataSelection')}</Label>
               <p className="text-xs text-muted-foreground">{t('selectOneFermataHint')}</p>
-              <RadioGroup
-                value={selectedFermatas[0] || ''}
-                onValueChange={handleFermataSelect}
-                className="grid grid-cols-1 gap-2 p-3 border rounded-lg max-h-48 overflow-y-auto"
-              >
-                {mockFermatas.map(fermata => (
+              <RadioGroup value={selectedFermatas[0] || ''} onValueChange={handleFermataSelect} className="grid grid-cols-1 gap-2 p-3 border rounded-lg max-h-48 overflow-y-auto">
+                {fermatas.map(fermata => (
                   <div key={fermata.id} className="flex items-center space-x-2">
                     <RadioGroupItem value={fermata.id} id={fermata.id} />
-                    <Label
-                      htmlFor={fermata.id}
-                      className="text-sm font-medium leading-none cursor-pointer"
-                    >
+                    <Label htmlFor={fermata.id} className="text-sm font-medium leading-none cursor-pointer">
                       {fermata.code} - {fermata.name}
                     </Label>
                   </div>

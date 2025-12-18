@@ -1,39 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Users, ArrowLeft, Phone, CreditCard } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { DataTable } from '@/components/admin/DataTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { mockDrivers as initialMockDrivers } from '@/data/mockData';
-import { Driver } from '@/types/taxi';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
+
+type Driver = {
+  id: string;
+  name: string;
+  phone: string;
+  license_id : string;
+};
 
 const Drivers = () => {
   const { user, logout } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  
-  const [drivers, setDrivers] = useState<Driver[]>(initialMockDrivers);
+
+  const [drivers, setDrivers] = useState<Driver[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [licenseId, setLicenseId] = useState('');
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  // Fetch drivers from Supabase
+  useEffect(() => {
+    supabase.from('drivers').select('*').then(({ data, error }) => {
+      console.log('Supabase drivers data:', data, error);
+      setDrivers(data || []);
+    });
+  }, []);
 
   const columns = [
     { 
@@ -61,12 +65,12 @@ const Drivers = () => {
       )
     },
     { 
-      key: 'licenseId' as keyof Driver, 
+      key: 'license_id' as keyof Driver, 
       label: t('licenseId'),
       render: (item: Driver) => (
         <div className="flex items-center gap-2">
           <CreditCard className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          <code className="text-xs sm:text-sm bg-muted px-1.5 sm:px-2 py-0.5 rounded truncate">{item.licenseId}</code>
+          <code className="text-xs sm:text-sm bg-muted px-1.5 sm:px-2 py-0.5 rounded truncate">{item.license_id}</code>
         </div>
       )
     },
@@ -84,16 +88,22 @@ const Drivers = () => {
     setEditingDriver(driver);
     setName(driver.name);
     setPhone(driver.phone);
-    setLicenseId(driver.licenseId);
+    setLicenseId(driver.license_id);
     setIsModalOpen(true);
   };
 
-  const handleDelete = (driver: Driver) => {
-    setDrivers(drivers.filter(d => d.id !== driver.id));
-    toast.success(`${t('delete')}: ${driver.name}`);
+  const handleDelete = async (driver: Driver) => {
+    // Delete from Supabase
+    const { error } = await supabase.from('drivers').delete().eq('id', driver.id);
+    if (!error) {
+      setDrivers(drivers.filter(d => d.id !== driver.id));
+      toast.success(`${t('delete')}: ${driver.name}`);
+    } else {
+      toast.error(error.message);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!name || !phone || !licenseId) {
@@ -102,19 +112,31 @@ const Drivers = () => {
     }
 
     if (editingDriver) {
-      setDrivers(drivers.map(d => 
-        d.id === editingDriver.id ? { ...d, name, phone, licenseId } : d
-      ));
-      toast.success(t('save'));
+      // Update driver in Supabase
+      const { error } = await supabase
+        .from('drivers')
+        .update({ name, phone, license_id: licenseId })
+        .eq('id', editingDriver.id);
+      if (!error) {
+        setDrivers(drivers.map(d => 
+          d.id === editingDriver.id ? { ...d, name, phone, license_id: licenseId } : d
+        ));
+        toast.success(t('save'));
+      } else {
+        toast.error(error.message);
+      }
     } else {
-      const newDriver: Driver = {
-        id: Date.now().toString(),
-        name,
-        phone,
-        licenseId,
-      };
-      setDrivers([...drivers, newDriver]);
-      toast.success(t('add'));
+      // Insert new driver in Supabase
+      const { data, error } = await supabase
+        .from('drivers')
+        .insert([{ name, phone, license_id: licenseId }])
+        .select();
+      if (!error && data && data[0]) {
+        setDrivers([...drivers, data[0]]);
+        toast.success(t('add'));
+      } else {
+        toast.error(error?.message || 'Failed to add');
+      }
     }
 
     setIsModalOpen(false);
@@ -126,7 +148,8 @@ const Drivers = () => {
     <div className="min-h-screen bg-background">
       <Header 
         associationName="Metro Taxi Association" 
-        dispatcherName="Alex Johnson"
+        dispatcherName={user.name}
+       
       />
 
       <main className="p-4 lg:p-6 max-w-[1200px] mx-auto">
@@ -137,13 +160,13 @@ const Drivers = () => {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold">Drivers</h1>
-            <p className="text-muted-foreground">Manage registered drivers</p>
+            <h1 className="text-2xl font-bold">{t('drivers')}</h1>
+            <p className="text-muted-foreground">{t('manageRegisteredDrivers')}</p>
           </div>
         </div>
 
         <DataTable
-          title="Registered Drivers"
+          title={t('registeredDrivers')}
           data={drivers}
           columns={columns}
           onAdd={handleAdd}

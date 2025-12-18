@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Car, ArrowLeft, Tag } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { DataTable } from '@/components/admin/DataTable';
@@ -18,27 +18,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { mockDrivers, mockTaxis as initialMockTaxis } from '@/data/mockData';
 import { Taxi } from '@/types/taxi';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 
-
+type Driver = {
+  id: string;
+  name: string;
+};
 
 const Taxis = () => {
   const { user, logout } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  
-  const [taxis, setTaxis] = useState<Taxi[]>(initialMockTaxis);
+
+  const [taxis, setTaxis] = useState<Taxi[]>([]);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTaxi, setEditingTaxi] = useState<Taxi | null>(null);
   const [plateNumber, setPlateNumber] = useState('');
   const [type, setType] = useState('');
   const [driverId, setDriverId] = useState('');
+
+  useEffect(() => {
+    // Fetch initial data for taxis and drivers
+    (async () => {
+      const { data: taxisData } = await supabase.from('taxis').select('*');
+      setTaxis(taxisData || []);
+      const { data: driversData } = await supabase.from('drivers').select('id, name');
+      setDrivers(driversData || []);
+    })();
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -46,37 +59,41 @@ const Taxis = () => {
   };
 
   const getDriverName = (id: string) => {
-    return mockDrivers.find(d => d.id === id)?.name || t('inactive');
+    return drivers.find(d => d.id === id)?.name || t('inactive');
   };
 
- 
-
   const columns = [
-    { 
-      key: 'plateNumber' as keyof Taxi, 
+    {
+      key: 'plate_number',
       label: t('plateNumber'),
       render: (item: Taxi) => (
         <div className="flex items-center gap-2">
           <Tag className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          <code className="font-semibold text-sm">{item.plateNumber}</code>
+          <code className="font-semibold text-sm">{item.plate_number}</code>
         </div>
       )
     },
-    
-    { 
-      key: 'driverId' as keyof Taxi, 
+    {
+      key: 'driver_id',
       label: t('driver'),
       render: (item: Taxi) => (
         <div className="flex items-center gap-2">
           <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
             <span className="text-primary font-medium text-xs">
-              {getDriverName(item.driverId).split(' ').map(n => n[0]).join('')}
+              {getDriverName(item.driver_id).split(' ').map(n => n[0]).join('')}
             </span>
           </div>
-          <span className="text-sm truncate">{getDriverName(item.driverId)}</span>
+          <span className="text-sm truncate">{getDriverName(item.driver_id)}</span>
         </div>
       )
     },
+    {
+      key: 'type',
+      label: t('type'),
+      render: (item: Taxi) => (
+        <span className="capitalize">{item.type}</span>
+      )
+    }
   ];
 
   const handleAdd = () => {
@@ -89,39 +106,57 @@ const Taxis = () => {
 
   const handleEdit = (taxi: Taxi) => {
     setEditingTaxi(taxi);
-    setPlateNumber(taxi.plateNumber);
-    
-    setDriverId(taxi.driverId);
+    setPlateNumber(taxi.plate_number);
+    setType(taxi.type);
+    setDriverId(taxi.driver_id);
     setIsModalOpen(true);
   };
 
-  const handleDelete = (taxi: Taxi) => {
-    setTaxis(taxis.filter(t => t.id !== taxi.id));
-    toast.success(`${t('delete')}: ${taxi.plateNumber}`);
+  const handleDelete = async (taxi: Taxi) => {
+    const { error } = await supabase.from('taxis').delete().eq('id', taxi.id);
+    if (!error) {
+      setTaxis(taxis.filter(t => t.id !== taxi.id));
+      toast.success(`${t('delete')}: ${taxi.plate_number}`);
+    } else {
+      toast.error(error.message);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!plateNumber || !type || !driverId) {
       toast.error(t('fillAllFields'));
       return;
     }
 
     if (editingTaxi) {
-      setTaxis(taxis.map(t => 
-        t.id === editingTaxi.id ? { ...t, plateNumber,  driverId } : t
-      ));
-      toast.success(t('save'));
+      // Update existing taxi
+      const { data, error } = await supabase
+        .from('taxis')
+        .update({ plate_number: plateNumber, type, driver_id: driverId })
+        .eq('id', editingTaxi.id)
+        .select();
+      if (!error && data && data[0]) {
+        setTaxis(taxis.map(t =>
+          t.id === editingTaxi.id ? data[0] : t
+        ));
+        toast.success(t('save'));
+      } else {
+        toast.error(error?.message || t('errorOccurred'));
+      }
     } else {
-      const newTaxi: Taxi = {
-        id: Date.now().toString(),
-        plateNumber,
-       
-        driverId,
-      };
-      setTaxis([...taxis, newTaxi]);
-      toast.success(t('add'));
+      // Create new taxi
+      const { data, error } = await supabase
+        .from('taxis')
+        .insert([{ plate_number: plateNumber, type, driver_id: driverId }])
+        .select();
+      if (!error && data && data[0]) {
+        setTaxis([...taxis, data[0]]);
+        toast.success(t('add'));
+      } else {
+        toast.error(error?.message || t('errorOccurred'));
+      }
     }
 
     setIsModalOpen(false);
@@ -131,9 +166,10 @@ const Taxis = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header 
-        associationName="Metro Taxi Association" 
-        dispatcherName="Alex Johnson"
+      <Header
+        associationName="Metro Taxi Association"
+        dispatcherName={user.name}
+        onLogout={handleLogout}
       />
 
       <main className="p-4 lg:p-6 max-w-[1200px] mx-auto">
@@ -144,13 +180,13 @@ const Taxis = () => {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold">Taxis</h1>
-            <p className="text-muted-foreground">Manage registered vehicles</p>
+            <h1 className="text-2xl font-bold">{t('taxis')}</h1>
+            <p className="text-muted-foreground">{t('manageRegisteredVehicles')}</p>
           </div>
         </div>
 
         <DataTable
-          title="Registered Taxis"
+          title={t('registeredTaxis')}
           data={taxis}
           columns={columns}
           onAdd={handleAdd}
@@ -178,7 +214,15 @@ const Taxis = () => {
                 className="uppercase"
               />
             </div>
-           
+            <div className="space-y-2">
+              <Label htmlFor="type">{t('type')}</Label>
+              <Input
+                id="type"
+                placeholder="sedan, suv, van, minibus..."
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="driver">{t('driver')}</Label>
               <Select value={driverId} onValueChange={setDriverId}>
@@ -186,7 +230,7 @@ const Taxis = () => {
                   <SelectValue placeholder={t('select')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockDrivers.map(d => (
+                  {drivers.map(d => (
                     <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
                   ))}
                 </SelectContent>

@@ -1,8 +1,8 @@
 export interface Taxi {
   id: string;
-  plateNumber: string;
- 
-  driverId: string;
+  plate_number: string;
+ type: string;
+  driver_id: string;
 }
 
 export interface Driver {

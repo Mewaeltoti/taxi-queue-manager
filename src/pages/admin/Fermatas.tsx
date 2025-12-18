@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MapPin, ArrowLeft } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { DataTable } from '@/components/admin/DataTable';
@@ -11,18 +11,28 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { mockFermatas } from '@/data/mockData';
 import { Fermata } from '@/types/taxi';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const Fermatas = () => {
-  const [fermatas, setFermatas] = useState<Fermata[]>(mockFermatas);
+  const [fermatas, setFermatas] = useState<Fermata[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFermata, setEditingFermata] = useState<Fermata | null>(null);
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
 
+  // LOAD
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase.from('fermatas').select('*').order('code');
+      if (error) toast.error('Failed to fetch destinations: ' + error.message);
+      if (data) setFermatas(data);
+    })();
+  }, []);
+
+  // DataTable columns
   const columns = [
     { 
       key: 'code' as keyof Fermata, 
@@ -36,6 +46,7 @@ const Fermatas = () => {
     { key: 'name' as keyof Fermata, label: 'Destination Name' },
   ];
 
+  // -- CRUD Handlers --
   const handleAdd = () => {
     setEditingFermata(null);
     setCode('');
@@ -50,32 +61,51 @@ const Fermatas = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (fermata: Fermata) => {
-    setFermatas(fermatas.filter(f => f.id !== fermata.id));
-    toast.success(`Deleted destination ${fermata.code}`);
+  const handleDelete = async (fermata: Fermata) => {
+    // Supabase delete
+    const { error } = await supabase.from('fermatas').delete().eq('id', fermata.id);
+    if (!error) {
+      setFermatas(fermatas.filter(f => f.id !== fermata.id));
+      toast.success(`Deleted destination ${fermata.code}`);
+    } else {
+      toast.error('Failed to delete: ' + error.message);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!code || !name) {
       toast.error('Please fill in all fields');
       return;
     }
 
     if (editingFermata) {
-      setFermatas(fermatas.map(f => 
-        f.id === editingFermata.id ? { ...f, code, name } : f
-      ));
-      toast.success('Destination updated');
+      // Update
+      const { error, data } = await supabase
+        .from('fermatas')
+        .update({ code, name })
+        .eq('id', editingFermata.id)
+        .select();
+      if (!error) {
+        setFermatas(fermatas.map(f =>
+          f.id === editingFermata.id ? { ...f, code, name } : f
+        ));
+        toast.success('Destination updated');
+      } else {
+        toast.error('Failed to update: ' + error.message);
+      }
     } else {
-      const newFermata: Fermata = {
-        id: Date.now().toString(),
-        code,
-        name,
-      };
-      setFermatas([...fermatas, newFermata]);
-      toast.success('Destination added');
+      // Add
+      const { data, error } = await supabase
+        .from('fermatas')
+        .insert([{ code, name }])
+        .select();
+      if (!error && data && data[0]) {
+        setFermatas([...fermatas, data[0]]);
+        toast.success('Destination added');
+      } else {
+        toast.error('Failed to add: ' + error?.message);
+      }
     }
 
     setIsModalOpen(false);

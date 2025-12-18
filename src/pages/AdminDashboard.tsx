@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Car, Send, Users, MapPin, FileText, Download, UserPlus } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
-import { mockQueueEntries, mockFermatas, mockUsers, mockDispatchLogs } from '@/data/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -29,24 +29,53 @@ const AdminDashboard = () => {
   const { t } = useLanguage();
   const [destinationFilter, setDestinationFilter] = useState<string>('all');
 
-  const waitingCount = mockQueueEntries.filter(e => e.status === 'waiting').length;
-  const dispatchedToday = mockDispatchLogs.length;
-  const activeDispatchers = mockUsers.filter(u => u.role === 'dispatcher').length;
-  const totalFermatas = mockFermatas.length;
+  // Supabase state
+  const [queueEntries, setQueueEntries] = useState<any[]>([]);
+  const [fermatas, setFermatas] = useState<any[]>([]);
+  const [dispatchers, setDispatchers] = useState<any[]>([]);
+  const [dispatchLogs, setDispatchLogs] = useState<any[]>([]);
 
-  const filteredLogs = destinationFilter === 'all' 
-    ? mockDispatchLogs 
-    : mockDispatchLogs.filter(log => log.destination.id === destinationFilter);
+  // Fetch data on mount
+  useEffect(() => {
+    // Fetch fermatas
+    supabase.from('fermatas').select('*').then(({ data }) => setFermatas(data ?? []));
+    // Fetch users/dispatchers
+    supabase.from('users').select('*').eq('role', 'dispatcher').then(({ data }) => setDispatchers(data ?? []));
+    // Fetch queue entries (today)
+    supabase.from('queue_entries')
+      .select('*, driver:driver_id(name), taxi:plate_number(type)')
+      .eq('status', 'waiting')
+      .then(({ data }) => setQueueEntries(data ?? []));
+    // Fetch today's dispatch logs with relation
+    supabase.from('dispatch_logs')
+      .select('*, queue_entry:queue_entry_id(plate_number, driver_name), destination:fermata_id(code, name)')
+      .gte('dispatched_at', new Date().toISOString().split('T')[0]) // today's logs only
+      .then(({ data }) => setDispatchLogs(data ?? []));
+  }, []);
 
-  const formatTime = (date: Date) => date.toLocaleTimeString('am-ET', { hour: '2-digit', minute: '2-digit' });
+  // KPI counts
+  const waitingCount = queueEntries.length;
+  const dispatchedToday = dispatchLogs.length;
+  const activeDispatchers = dispatchers.length;
+  const totalFermatas = fermatas.length;
+
+  // Filtering logs
+  const filteredLogs = destinationFilter === 'all'
+    ? dispatchLogs
+    : dispatchLogs.filter(log => log.destination?.id === destinationFilter);
+
+  const formatTime = (dateString: string) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleTimeString('am-ET', { hour: '2-digit', minute: '2-digit' });
+  };
 
   const exportCSV = () => {
     const headers = ['Plate Number', 'Driver', 'Destination', 'Dispatch Time'];
     const rows = filteredLogs.map(log => [
-      log.queueEntry.plateNumber,
-      log.queueEntry.driverName,
-      log.destination.name,
-      formatTime(log.dispatchedAt),
+      log.queue_entry?.plate_number || '',
+      log.queue_entry?.driver_name || '',
+      log.destination ? `${log.destination.code} - ${log.destination.name}` : '',
+      formatTime(log.dispatched_at),
     ]);
     const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -140,7 +169,7 @@ const AdminDashboard = () => {
             </Link>
             <Link to="/admin/fermatas">
               <Button variant="outline" size="sm">
-                <Users className="h-4 w-4 mr-2" />
+                <MapPin className="h-4 w-4 mr-2" />
                 {t('manageFermatas')}
               </Button>
             </Link>
@@ -176,7 +205,7 @@ const AdminDashboard = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('allDestinations')}</SelectItem>
-                  {mockFermatas.map(f => (
+                  {fermatas.map(f => (
                     <SelectItem key={f.id} value={f.id}>{f.code} - {f.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -207,10 +236,10 @@ const AdminDashboard = () => {
                 ) : (
                   filteredLogs.map((log, idx) => (
                     <TableRow key={`${log.id}-${idx}`}>
-                      <TableCell className="font-mono">{log.queueEntry.plateNumber}</TableCell>
-                      <TableCell>{log.queueEntry.driverName}</TableCell>
-                      <TableCell>{log.destination.code} - {log.destination.name}</TableCell>
-                      <TableCell>{formatTime(log.dispatchedAt)}</TableCell>
+                      <TableCell className="font-mono">{log.queue_entry?.plate_number || ''}</TableCell>
+                      <TableCell>{log.queue_entry?.driver_name || ''}</TableCell>
+                      <TableCell>{log.destination ? `${log.destination.code} - ${log.destination.name}` : ''}</TableCell>
+                      <TableCell>{formatTime(log.dispatched_at)}</TableCell>
                     </TableRow>
                   ))
                 )}
