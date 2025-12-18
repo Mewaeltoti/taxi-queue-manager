@@ -30,48 +30,55 @@ const DispatcherDashboard = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Form state
   const [plateNumber, setPlateNumber] = useState('');
   const [driverName, setDriverName] = useState('');
 
-  // Load data
+  // Load data — filtered by current dispatcher
   useEffect(() => {
     if (!user) return navigate('/login');
-  
+
     const loadData = async () => {
       setIsLoading(true);
-  
+
+      // Load fermatas
       const { data: fermData } = await supabase.from('fermatas').select('*');
       setFermatas(fermData || []);
-  
+
+      // Load ONLY this dispatcher's queue entries
       const { data: queueData } = await supabase
         .from('queue_entries')
         .select('*')
+        .eq('dispatcher_id', user.id)  // ← Critical: only their taxis
         .order('queue_number', { ascending: true });
+
       setQueueEntries(queueData || []);
-  
-      const today = new Date().toISOString().split('T')[0];
+
+      // Load today's dispatch logs (only this dispatcher's)
+      const today = new Date().toLocaleDateString('en-CA');
+
       const { data: logsData } = await supabase
         .from('dispatch_logs')
-        .select('*, queue_entry(*), fermata:fermata_id(code, name)')
-        .gte('dispatched_at', today)
+        .select('*, queue_entry(id, queue_number, plate_number, driver_name, arrival_time, status, dispatched_at), fermata:fermata_id(code, name)')
+        .eq('queue_entry.dispatcher_id', user.id)  // ← Only their dispatches
+        .gte('dispatched_at', today + 'T00:00:00')
         .order('dispatched_at', { ascending: false });
+
       setDispatchLogs(logsData || []);
-  
+
       setIsLoading(false);
     };
-  
+
     loadData();
-  
+
+    // Real-time: reload when queue or logs change
     const channel = supabase
       .channel('dispatcher-dashboard')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'queue_entries' }, loadData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'dispatch_logs' }, loadData)
       .subscribe();
-  
-    // Correct cleanup — do NOT return the promise
+
     return () => {
-      supabase.removeChannel(channel);
+      void supabase.removeChannel(channel);
     };
   }, [user, navigate]);
 
@@ -81,92 +88,105 @@ const DispatcherDashboard = () => {
   const activeEntries = queueEntries.filter(e =>
     ['waiting', 'not_ready', 'returned'].includes(e.status)
   );
+
   const waitingCount = activeEntries.length;
   const nextDispatchableTaxi = activeEntries.find(e => e.status === 'waiting' || e.status === 'returned');
   const dispatchedToday = dispatchLogs.length;
 
-  // Add to queue directly
   const handleAddToQueue = async () => {
     if (!plateNumber.trim() || !driverName.trim()) {
-      toast.error(t('fillAllFields') || 'Please enter plate and driver name');
+      toast.error('Please enter plate and driver name');
       return;
     }
 
     if (!primaryFermata) {
-      toast.error(t('noAssignedDestination') || 'You are not assigned to any destination');
+      toast.error('No destination assigned');
       return;
     }
 
-    setIsLoading(true);
-
     const newQueueNumber = activeEntries.length + 1;
 
-    const { error } = await supabase.from('queue_entries').insert({
-      queue_number: newQueueNumber,
-      plate_number: plateNumber.trim().toUpperCase(),
-      driver_name: driverName.trim(),
-      arrival_time: new Date().toISOString(),
-      status: 'waiting',
-      fermata_id: primaryFermata.id,
-      dispatcher_id: user?.id,
-    });
+    const { error } = await supabase
+      .from('queue_entries')
+      .insert({
+        queue_number: newQueueNumber,
+        plate_number: plateNumber.trim().toUpperCase(),
+        driver_name: driverName.trim(),
+        arrival_time: new Date().toISOString(),
+        status: 'waiting',
+        fermata_id: primaryFermata.id,
+        dispatcher_id: user.id,  // ← Always set to current user
+        updated_at: new Date().toISOString(),
+      });
 
     if (error) {
-      toast.error('Failed to add to queue');
+      toast.error('Failed to add: ' + error.message);
       console.error(error);
     } else {
-      toast.success(`${plateNumber.toUpperCase()} added to queue`);
+      toast.success(`${plateNumber.toUpperCase()} added to queue!`);
       setPlateNumber('');
       setDriverName('');
       setIsAddModalOpen(false);
 
-      // Refetch queue
+      // Refetch only this dispatcher's queue
       const { data } = await supabase
         .from('queue_entries')
         .select('*')
+        .eq('dispatcher_id', user.id)
         .order('queue_number', { ascending: true });
       setQueueEntries(data || []);
     }
-
-    setIsLoading(false);
   };
 
   const handleDispatchNext = async () => {
     if (!nextDispatchableTaxi) {
-      toast.error(t('noTaxiInQueue') || 'No taxi ready to dispatch');
+      toast.error('No taxi ready to dispatch');
       return;
     }
+
     if (!primaryFermata) {
-      toast.error(t('noAssignedDestination') || 'No destination assigned');
+      toast.error('No destination assigned');
       return;
     }
 
     setIsLoading(true);
     const dispatchedAt = new Date().toISOString();
 
+    // Update queue entry
     await supabase
       .from('queue_entries')
-      .update({ status: 'dispatched', dispatched_at: dispatchedAt })
+      .update({
+        status: 'dispatched',
+        dispatched_at: dispatchedAt,
+        updated_at: dispatchedAt,
+      })
       .eq('id', nextDispatchableTaxi.id);
 
+    // Add to dispatch logs
     await supabase.from('dispatch_logs').insert({
       queue_entry_id: nextDispatchableTaxi.id,
       fermata_id: primaryFermata.id,
       dispatched_at: dispatchedAt,
     });
 
-    // Refresh
-    const { data: queue } = await supabase.from('queue_entries').select('*').order('queue_number');
+    // Refetch this dispatcher's data only
+    const { data: queue } = await supabase
+      .from('queue_entries')
+      .select('*')
+      .eq('dispatcher_id', user.id)
+      .order('queue_number', { ascending: true });
     setQueueEntries(queue || []);
 
+    const today = new Date().toLocaleDateString('en-CA');
     const { data: logs } = await supabase
       .from('dispatch_logs')
-      .select('*, queue_entry(*), fermata:fermata_id(code, name)')
-      .gte('dispatched_at', new Date().toISOString().split('T')[0])
+      .select('*, queue_entry(id, queue_number, plate_number, driver_name, arrival_time, status, dispatched_at), fermata:fermata_id(code, name)')
+      .eq('queue_entry.dispatcher_id', user.id)
+      .gte('dispatched_at', today + 'T00:00:00')
       .order('dispatched_at', { ascending: false });
     setDispatchLogs(logs || []);
 
-    toast.success(`${nextDispatchableTaxi.plate_number} dispatched to ${primaryFermata.code}`);
+    toast.success(`${nextDispatchableTaxi.plate_number} dispatched!`);
     setIsLoading(false);
   };
 
@@ -176,14 +196,22 @@ const DispatcherDashboard = () => {
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', entryId);
 
-    const { data } = await supabase.from('queue_entries').select('*').order('queue_number');
+    // Refetch only this dispatcher's queue
+    const { data } = await supabase
+      .from('queue_entries')
+      .select('*')
+      .eq('dispatcher_id', user.id)
+      .order('queue_number', { ascending: true });
     setQueueEntries(data || []);
 
     toast.success('Status updated');
   };
 
   const exportTodaysLogToCSV = () => {
-    if (dispatchLogs.length === 0) return toast.error('No logs today');
+    if (dispatchLogs.length === 0) {
+      toast.error('No dispatches today');
+      return;
+    }
 
     const headers = ['Plate', 'Driver', 'Destination', 'Time'];
     const rows = dispatchLogs.map(log => [
@@ -193,14 +221,14 @@ const DispatcherDashboard = () => {
       new Date(log.dispatched_at).toLocaleTimeString('am-ET', { hour: '2-digit', minute: '2-digit' }),
     ]);
 
-    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const csv = [headers.join(','), ...rows.map(r => `"${r.join('","')}"`)].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `dispatch-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `my-dispatches-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
-    toast.success('Exported!');
+    toast.success('CSV exported!');
   };
 
   const handleLogout = () => {
@@ -217,7 +245,7 @@ const DispatcherDashboard = () => {
       <main className="p-4 lg:p-6 max-w-[1400px] mx-auto">
         {/* Assigned Destination */}
         <div className="mb-4">
-          <p className="text-sm text-muted-foreground mb-2">Assigned Destination:</p>
+          <p className="text-sm text-muted-foreground mb-2">Your Assigned Destination:</p>
           <div className="flex flex-wrap gap-2">
             {assignedFermatas.map(f => (
               <Badge key={f.id} variant="secondary" className="px-3 py-1 text-sm">
@@ -229,29 +257,21 @@ const DispatcherDashboard = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="stat-card p-4 rounded-lg bg-card border">
-            <div className="flex items-center gap-3">
-              <Car className="h-6 w-6 text-accent" />
-              <div>
-                <p className="text-2xl font-bold">{waitingCount}</p>
-                <p className="text-sm text-muted-foreground">In Queue</p>
-              </div>
-            </div>
+          <div className="p-4 rounded-lg bg-card border text-center">
+            <Car className="h-8 w-8 mx-auto text-accent mb-2" />
+            <p className="text-2xl font-bold">{waitingCount}</p>
+            <p className="text-sm text-muted-foreground">In Your Queue</p>
           </div>
-          <div className="stat-card p-4 rounded-lg bg-card border">
-            <div className="flex items-center gap-3">
-              <Send className="h-6 w-6 text-success" />
-              <div>
-                <p className="text-2xl font-bold">{dispatchedToday}</p>
-                <p className="text-sm text-muted-foreground">Dispatched Today</p>
-              </div>
-            </div>
+          <div className="p-4 rounded-lg bg-card border text-center">
+            <Send className="h-8 w-8 mx-auto text-success mb-2" />
+            <p className="text-2xl font-bold">{dispatchedToday}</p>
+            <p className="text-sm text-muted-foreground">Dispatched Today</p>
           </div>
         </div>
 
         {/* Action Bar */}
         <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-          <h2 className="text-2xl font-bold">Taxi Queue</h2>
+          <h2 className="text-2xl font-bold">Your Taxi Queue</h2>
           <div className="flex gap-3">
             <Button onClick={() => setIsAddModalOpen(true)} variant="outline">
               <Plus className="h-4 w-4 mr-2" />
@@ -282,7 +302,7 @@ const DispatcherDashboard = () => {
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                Today's Dispatches
+                Your Dispatches Today
               </h3>
               <Button onClick={exportTodaysLogToCSV} variant="outline" size="sm">
                 <Download className="h-4 w-4 mr-2" />
@@ -319,11 +339,11 @@ const DispatcherDashboard = () => {
         )}
       </main>
 
-      {/* Simple Add to Queue Modal */}
+      {/* Add to Queue Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Taxi to Queue</DialogTitle>
+            <DialogTitle>Add Taxi to Your Queue</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -340,7 +360,7 @@ const DispatcherDashboard = () => {
               <Label htmlFor="driver">Driver Name</Label>
               <Input
                 id="driver"
-                placeholder="John Doe"
+                placeholder="Full name"
                 value={driverName}
                 onChange={(e) => setDriverName(e.target.value)}
               />
@@ -351,7 +371,7 @@ const DispatcherDashboard = () => {
               Cancel
             </Button>
             <Button onClick={handleAddToQueue} disabled={isLoading}>
-              Add to Queue
+              {isLoading ? 'Adding...' : 'Add to Queue'}
             </Button>
           </DialogFooter>
         </DialogContent>
