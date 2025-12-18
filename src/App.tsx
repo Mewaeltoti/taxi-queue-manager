@@ -18,20 +18,21 @@ import AuditLogs from "./pages/admin/AuditLogs";
 import NotFound from "./pages/NotFound";
 import { LanguageProvider } from "./contexts/LanguageContext";
 
+
 const queryClient = new QueryClient();
 
 // Protected route wrapper
-function ProtectedRoute({ children, adminOnly = false, dispatcherOnly = false }: { 
-  children: React.ReactNode; 
+function ProtectedRoute({ children, adminOnly = false, dispatcherOnly = false }: {
+  children: React.ReactNode;
   adminOnly?: boolean;
   dispatcherOnly?: boolean;
 }) {
   const { user, isAdmin, isDispatcher } = useAuth();
-  
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-  
+
   if (adminOnly && !isAdmin) {
     return <Navigate to="/" replace />;
   }
@@ -39,29 +40,29 @@ function ProtectedRoute({ children, adminOnly = false, dispatcherOnly = false }:
   if (dispatcherOnly && !isDispatcher) {
     return <Navigate to="/" replace />;
   }
-  
+
   return <>{children}</>;
 }
 
 // Auth route wrapper (redirect if already logged in)
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, isAdmin } = useAuth();
-  
+
   if (user) {
     return <Navigate to={isAdmin ? "/admin" : "/dispatcher"} replace />;
   }
-  
+
   return <>{children}</>;
 }
 
 // Home route - redirects based on role
 function HomeRedirect() {
   const { user, isAdmin } = useAuth();
-  
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-  
+
   return <Navigate to={isAdmin ? "/admin" : "/dispatcher"} replace />;
 }
 
@@ -74,7 +75,7 @@ function AppRoutes() {
         </AuthRoute>
       } />
       <Route path="/" element={<HomeRedirect />} />
-      
+
       {/* Dispatcher Routes */}
       <Route path="/dispatcher" element={
         <ProtectedRoute dispatcherOnly>
@@ -86,7 +87,8 @@ function AppRoutes() {
           <DispatcherReports />
         </ProtectedRoute>
       } />
-      
+
+
       {/* Admin Routes */}
       <Route path="/admin" element={
         <ProtectedRoute adminOnly>
@@ -103,7 +105,7 @@ function AppRoutes() {
           <Fermatas />
         </ProtectedRoute>
       } />
-       <Route path="/admin/dispatchers" element={
+      <Route path="/admin/dispatchers" element={
         <ProtectedRoute adminOnly>
           <Dispatchers />
         </ProtectedRoute>
@@ -144,11 +146,13 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
-          <LanguageProvider>
+        <LanguageProvider>
+          <AuthProvider>
+
             <AppRoutes />
-          </LanguageProvider>
-        </AuthProvider>
+
+          </AuthProvider>
+        </LanguageProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

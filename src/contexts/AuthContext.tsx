@@ -1,12 +1,21 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { User } from '@/types/taxi';
-import { mockUsers } from '@/data/mockData';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import bcrypt from 'bcryptjs';
+import { toast } from 'sonner';
+import { useLanguage } from './LanguageContext';
+interface User {
+  id: string;
+  email?: string;
+  name?: string;
+  role: 'admin' | 'dispatcher';
+  assigned_fermata_ids: string[];
+}
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAdmin: boolean;
   isDispatcher: boolean;
 }
@@ -14,53 +23,104 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('taxi_user');
-    return saved ? JSON.parse(saved) : null;
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const {t} = useLanguage();
+  const loadUserProfile = async (uid: string) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, email, name, role, assigned_fermata_ids')
+      .eq('id', uid)
+      .maybeSingle();
 
-  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Mock authentication - in production, this would be Supabase auth
-    const foundUser = mockUsers.find(u => u.email === email);
-    
-    if (foundUser && password === 'demo123') {
-      setUser(foundUser);
-      localStorage.setItem('taxi_user', JSON.stringify(foundUser));
-      setIsLoading(false);
-      return true;
+    if (error && error.code !== 'PGRST116') {
+      console.error('Profile load error:', error);
     }
-    
+
+    if (data) {
+      setUser(data);
+    } else {
+      setUser(null);
+    }
     setIsLoading(false);
-    return false;
-  }, []);
-
-  const logout = useCallback(() => {
-    setUser(null);
-    localStorage.removeItem('taxi_user');
-  }, []);
-
-  const value: AuthContextType = {
-    user,
-    isLoading,
-    login,
-    logout,
-    isAdmin: user?.role === 'admin',
-    isDispatcher: user?.role === 'dispatcher',
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        loadUserProfile(session.user.id);
+      } else {
+        setUser(null);
+        setIsLoading(false);
+      }
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        loadUserProfile(session.user.id);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  const login = async (email: string, password: string): Promise<boolean> => {
+    setIsLoading(true);
+  
+    const { data: userData, error } = await supabase
+      .from('users')
+      .select('id, email, name, role, assigned_fermata_ids, password')
+      .eq('email', email.trim())
+      .single();
+  
+    if (error || !userData) {
+      toast.error('Invalid email or password');
+      setIsLoading(false);
+      return false;
+    }
+  
+    // Simple plain text comparison (for development)
+    if (userData.password !== password) {
+      toast.error('Invalid email or password');
+      setIsLoading(false);
+      return false;
+    }
+  
+    setUser({
+      id: userData.id,
+      email: userData.email,
+      name: userData.name,
+      role: userData.role,
+      assigned_fermata_ids: userData.assigned_fermata_ids || [],
+    });
+  
+    setIsLoading(false);
+    return true;
+  };
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{
+      user,
+      isLoading,
+      login,
+      logout,
+      isAdmin: user?.role === 'admin',
+      isDispatcher: user?.role === 'dispatcher',
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
 }

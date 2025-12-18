@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Clock, Car, User, Hash, ArrowRight, AlertTriangle, RotateCcw, X, Flag, CheckCircle } from 'lucide-react';
+import { Clock, Car, User, Hash, AlertTriangle, RotateCcw, X, Flag, CheckCircle } from 'lucide-react';
 import { QueueEntry, QueueStatus } from '@/types/database';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +25,6 @@ interface QueueTableEnhancedProps {
 const statusColors: Record<QueueStatus, string> = {
   waiting: 'bg-queue-waiting',
   dispatched: 'bg-queue-dispatched text-muted-foreground',
-  skipped: 'bg-warning/10 border-l-4 border-l-warning', // Keep for compat, but not used
   not_ready: 'bg-destructive/10 border-l-4 border-l-destructive',
   returned: 'bg-primary/10 border-l-4 border-l-primary',
   canceled: 'bg-muted text-muted-foreground line-through',
@@ -34,8 +33,7 @@ const statusColors: Record<QueueStatus, string> = {
 const statusBadgeVariants: Record<QueueStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   waiting: 'secondary',
   dispatched: 'default',
-  skipped: 'outline',
-  not_ready: 'destructive',
+   not_ready: 'destructive',
   returned: 'secondary',
   canceled: 'outline',
 };
@@ -51,10 +49,9 @@ export function QueueTableEnhanced({
   const { t } = useLanguage();
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<QueueEntry | null>(null);
-  const [selectedTaxiId, setSelectedTaxiId] = useState<string | null>(null);
 
   const activeEntries = entries.filter(e =>
-    ['waiting', 'not_ready', 'returned'].includes(e.status) // Removed 'skipped'
+    e && ['waiting', 'not_ready', 'returned'].includes(e.status)
   );
 
   const formatDuration = (arrivalTime: string): string => {
@@ -63,11 +60,11 @@ export function QueueTableEnhanced({
     const diffMs = now.getTime() - arrival.getTime();
     const diffMins = Math.floor(diffMs / 60000);
 
-    if (diffMins < 1) return t('justNow');
-    if (diffMins < 60) return `${diffMins} ${t('minutes')}`;
+    if (diffMins < 1) return t('justNow') || 'Just now';
+    if (diffMins < 60) return `${diffMins} ${t('minutes') || 'min'}`;
     const hours = Math.floor(diffMins / 60);
     const mins = diffMins % 60;
-    return `${hours} ${t('hours')} ${mins > 0 ? ` ${mins} ${t('minutes')}` : ''}`;
+    return `${hours} ${t('hours') || 'h'} ${mins > 0 ? `${mins} ${t('minutes') || 'min'}` : ''}`;
   };
 
   const formatTime = (arrivalTime: string): string => {
@@ -84,17 +81,15 @@ export function QueueTableEnhanced({
 
   const handleOpenReport = (entry: QueueEntry) => {
     setSelectedEntry(entry);
-    setSelectedTaxiId(entry.taxi_id);
     setReportModalOpen(true);
   };
 
   const handleSubmitReport = (reason: string, description?: string) => {
-    if (selectedEntry && selectedTaxiId) {
-      onReport?.(selectedEntry.id, selectedTaxiId, reason, description);
+    if (selectedEntry) {
+      onReport?.(selectedEntry.id, selectedEntry.id, reason, description); // taxi_id not used anymore
     }
     setReportModalOpen(false);
     setSelectedEntry(null);
-    setSelectedTaxiId(null);
   };
 
   return (
@@ -104,7 +99,7 @@ export function QueueTableEnhanced({
         {activeEntries.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">
             <Car className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>{t('noTaxisInQueue')}</p>
+            <p>{t('noTaxisInQueue') || 'No taxis in queue'}</p>
           </div>
         ) : (
           <div className="divide-y">
@@ -119,8 +114,7 @@ export function QueueTableEnhanced({
                 }}
                 className={cn(
                   'p-4 transition-colors animate-slide-up cursor-pointer',
-                  isNextInQueue(entry, index) ? 'queue-row-next animate-pulse' : statusColors[entry.status],
-                  selectedTaxiId === entry.id && 'ring-2 ring-primary ring-inset'
+                  isNextInQueue(entry, index) ? 'queue-row-next animate-pulse' : statusColors[entry.status]
                 )}
                 style={{ animationDelay: `${index * 50}ms` }}
               >
@@ -135,8 +129,8 @@ export function QueueTableEnhanced({
                       {entry.queue_number}
                     </div>
                     <div>
-                      <p className="font-semibold">{entry.taxi?.plate_number}</p>
-                      <p className="text-sm text-muted-foreground">{entry.taxi?.driver?.name}</p>
+                      <p className="font-semibold">{entry.plate_number || '—'}</p>
+                      <p className="text-sm text-muted-foreground">{entry.driver_name || 'Unknown Driver'}</p>
                     </div>
                   </div>
                   {!readOnly && (
@@ -150,23 +144,23 @@ export function QueueTableEnhanced({
                         {entry.status !== 'not_ready' && (
                           <DropdownMenuItem onClick={() => onStatusChange?.(entry.id, 'not_ready')}>
                             <AlertTriangle className="h-4 w-4 mr-2" />
-                            {t('markNotReady')}
+                            {t('markNotReady') || 'Mark Not Ready'}
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem onClick={() => onStatusChange?.(entry.id, 'returned')}>
                           <RotateCcw className="h-4 w-4 mr-2" />
-                          {t('markReturned')}
+                          {t('markReturned') || 'Mark Returned'}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => onStatusChange?.(entry.id, 'canceled')}
                           className="text-destructive"
                         >
                           <X className="h-4 w-4 mr-2" />
-                          {t('removeFromQueue')}
+                          {t('removeFromQueue') || 'Remove from Queue'}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleOpenReport(entry)}>
                           <Flag className="h-4 w-4 mr-2" />
-                          {t('reportTaxi')}
+                          {t('reportTaxi') || 'Report Taxi'}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -194,7 +188,7 @@ export function QueueTableEnhanced({
                       entry.status === 'waiting' && isNextInQueue(entry, index) && 'animate-pulse-subtle bg-accent text-accent-foreground'
                     )}
                   >
-                    {t(entry.status)}
+                    {t(entry.status) || entry.status}
                   </Badge>
                 </div>
               </div>
@@ -209,12 +203,12 @@ export function QueueTableEnhanced({
           <thead>
             <tr className="border-b bg-muted/50">
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">#</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('plateNumber')}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('driver')}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('arrivalTime')}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('waitingTime')}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('status')}</th>
-              {!readOnly && <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('actions')}</th>}
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('plateNumber') || 'Plate'}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('driver') || 'Driver'}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('arrivalTime') || 'Arrival'}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('waitingTime') || 'Waiting'}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('status') || 'Status'}</th>
+              {!readOnly && <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('actions') || 'Actions'}</th>}
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -222,7 +216,7 @@ export function QueueTableEnhanced({
               <tr>
                 <td colSpan={!readOnly ? 7 : 6} className="px-4 py-12 text-center text-muted-foreground">
                   <Car className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>{t('noTaxisInQueue')}</p>
+                  <p>{t('noTaxisInQueue') || 'No taxis in queue'}</p>
                 </td>
               </tr>
             ) : (
@@ -245,8 +239,8 @@ export function QueueTableEnhanced({
                       {entry.queue_number}
                     </div>
                   </td>
-                  <td className="px-4 py-4 font-semibold">{entry.taxi?.plate_number}</td>
-                  <td className="px-4 py-4">{entry.taxi?.driver?.name}</td>
+                  <td className="px-4 py-4 font-semibold">{entry.plate_number || '—'}</td>
+                  <td className="px-4 py-4">{entry.driver_name || 'Unknown Driver'}</td>
                   <td className="px-4 py-4 text-muted-foreground">{formatTime(entry.arrival_time)}</td>
                   <td className="px-4 py-4">
                     <span className={cn(
@@ -258,7 +252,7 @@ export function QueueTableEnhanced({
                   </td>
                   <td className="px-4 py-4">
                     <Badge variant={statusBadgeVariants[entry.status]}>
-                      {t(entry.status)}
+                      {t(entry.status) || entry.status}
                     </Badge>
                   </td>
                   {!readOnly && (
@@ -275,7 +269,7 @@ export function QueueTableEnhanced({
                             }}
                           >
                             <CheckCircle className="h-3 w-3 mr-1" />
-                            {t('readyNow')}
+                            {t('readyNow') || 'Ready'}
                           </Button>
                         )}
                         <DropdownMenu>
@@ -288,23 +282,23 @@ export function QueueTableEnhanced({
                             {entry.status !== 'not_ready' && (
                               <DropdownMenuItem onClick={() => onStatusChange?.(entry.id, 'not_ready')}>
                                 <AlertTriangle className="h-4 w-4 mr-2" />
-                                {t('markNotReady')}
+                                {t('markNotReady') || 'Not Ready'}
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem onClick={() => onStatusChange?.(entry.id, 'returned')}>
                               <RotateCcw className="h-4 w-4 mr-2" />
-                              {t('markReturned')}
+                              {t('markReturned') || 'Returned'}
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => onStatusChange?.(entry.id, 'canceled')}
                               className="text-destructive"
                             >
                               <X className="h-4 w-4 mr-2" />
-                              {t('removeFromQueue')}
+                              {t('removeFromQueue') || 'Cancel'}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleOpenReport(entry)}>
                               <Flag className="h-4 w-4 mr-2" />
-                              {t('reportTaxi')}
+                              {t('reportTaxi') || 'Report'}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -322,7 +316,7 @@ export function QueueTableEnhanced({
         open={reportModalOpen}
         onOpenChange={setReportModalOpen}
         onSubmit={handleSubmitReport}
-        taxiPlate={selectedEntry?.taxi?.plate_number}
+        taxiPlate={selectedEntry?.plate_number || ''}
       />
     </div>
   );

@@ -117,6 +117,18 @@ export function RegisterTaxiModal({ open, onOpenChange, onSubmit }: RegisterTaxi
               onChange={(e) => setDriverName(e.target.value)}
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="type" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              {t('taixType')}
+            </Label>
+            <Input
+              id="type"
+              placeholder={t('typePlaceholder')}
+              value={taxiType}
+              onChange={(e) => setTaxiType(e.target.value)}
+            />
+          </div>
 
          
           <div className="flex gap-3 pt-4">

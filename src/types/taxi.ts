@@ -48,5 +48,5 @@ export interface User {
   email: string;
   name: string;
   role: 'admin' | 'dispatcher';
-  assignedFermatas?: string[];
+  assigned_fermata_ids?: string[];
 }

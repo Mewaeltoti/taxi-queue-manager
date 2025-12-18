@@ -1,6 +1,6 @@
 // Database types matching Supabase schema
 export type AppRole = 'admin' | 'dispatcher';
-export type QueueStatus = 'waiting' | 'dispatched' | 'skipped' | 'not_ready' | 'returned' | 'canceled';
+export type QueueStatus = 'waiting' | 'dispatched' | 'not_ready' | 'returned' | 'canceled';
 export type ReportStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
 export type ReportReason = 'wrong_fermata' | 'wrong_association' | 'unauthorized_dispatch' | 'excessive_skips' | 'timeout' | 'other';
 export type AuditAction = 
@@ -94,19 +94,15 @@ export interface Taxi {
 export interface QueueEntry {
   id: string;
   queue_number: number;
-  taxi_id: string;
-  fermata_id: string;
-  dispatcher_id: string | null;
-  status: QueueStatus;
-  skip_count: number;
-  last_skip_at: string | null;
+  plate_number: string;
+  driver_name: string;
   arrival_time: string;
-  dispatched_at: string | null;
-  created_at: string;
-  updated_at: string;
-  taxi?: Taxi;
-  fermata?: Fermata;
-  dispatcher?: Profile;
+  status:  QueueStatus;
+  dispatched_at?: string | null;
+  fermata_id?: string | null;
+  dispatcher_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface DispatchLog {
