@@ -1,252 +1,283 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Car, Send, Users, MapPin, FileText, Download, UserPlus } from 'lucide-react';
-import { Header } from '@/components/layout/Header';
+import { Link } from 'react-router-dom';
+import { 
+  Users, 
+  MapPin, 
+  Clock, 
+  AlertCircle,
+  TrendingUp,
+  Activity,
+  UserPlus,
+  Car
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 
 const AdminDashboard = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const { t } = useLanguage();
-  const [destinationFilter, setDestinationFilter] = useState<string>('all');
 
-  // Supabase state
-  const [queueEntries, setQueueEntries] = useState<any[]>([]);
+  const [destinationFilter, setDestinationFilter] = useState<string>('all');
+  const [dispatcherFilter, setDispatcherFilter] = useState<string>('all');
+
   const [fermatas, setFermatas] = useState<any[]>([]);
   const [dispatchers, setDispatchers] = useState<any[]>([]);
-  const [dispatchLogs, setDispatchLogs] = useState<any[]>([]);
+  const [queueEntries, setQueueEntries] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch data on mount
   useEffect(() => {
-    // Fetch fermatas
-    supabase.from('fermatas').select('*').then(({ data }) => setFermatas(data ?? []));
-    // Fetch users/dispatchers
-    supabase.from('users').select('*').eq('role', 'dispatcher').then(({ data }) => setDispatchers(data ?? []));
-    // Fetch queue entries (today)
-    supabase.from('queue_entries')
-      .select('*, driver:driver_id(name), taxi:plate_number(type)')
-      .eq('status', 'waiting')
-      .then(({ data }) => setQueueEntries(data ?? []));
-    // Fetch today's dispatch logs with relation
-    supabase.from('dispatch_logs')
-      .select('*, queue_entry:queue_entry_id(plate_number, driver_name), destination:fermata_id(code, name)')
-      .gte('dispatched_at', new Date().toISOString().split('T')[0]) // today's logs only
-      .then(({ data }) => setDispatchLogs(data ?? []));
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        const [fermRes, dispRes, queueRes] = await Promise.all([
+          supabase.from('fermatas').select('id, code, name'),
+          supabase.from('users').select('id, name').eq('role', 'dispatcher'),
+          supabase
+            .from('queue_entries')
+            .select('id, status, plate_number, driver_name, arrival_time, fermata_id, dispatcher_id')
+            .in('status', ['waiting', 'not_ready'])
+            .order('arrival_time', { ascending: true })
+        ]);
+
+        setFermatas(fermRes.data ?? []);
+        setDispatchers(dispRes.data ?? []);
+        setQueueEntries(queueRes.data ?? []);
+      } catch (err) {
+        console.error('Load error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
   }, []);
 
-  // KPI counts
-  const waitingCount = queueEntries.length;
-  const dispatchedToday = dispatchLogs.length;
+  // KPIs
   const activeDispatchers = dispatchers.length;
-  const totalFermatas = fermatas.length;
+  const totalDestinations = fermatas.length;
+  const waitingTaxis = queueEntries.filter(q => q.status === 'waiting').length;
+  const notReadyTaxis = queueEntries.filter(q => q.status === 'not_ready').length;
 
-  // Filtering logs
-  const filteredLogs = destinationFilter === 'all'
-    ? dispatchLogs
-    : dispatchLogs.filter(log => log.destination?.id === destinationFilter);
+  // Active queue
+  const activeQueue = queueEntries;
 
-  const formatTime = (dateString: string) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleTimeString('am-ET', { hour: '2-digit', minute: '2-digit' });
-  };
+  // Filtered active queue
+  const filteredQueue = activeQueue.filter(entry => {
+    const matchesFermata = destinationFilter === 'all' || entry.fermata_id === destinationFilter;
+    const matchesDispatcher = dispatcherFilter === 'all' || entry.dispatcher_id === dispatcherFilter;
+    return matchesFermata && matchesDispatcher;
+  });
 
-  const exportCSV = () => {
-    const headers = ['Plate Number', 'Driver', 'Destination', 'Dispatch Time'];
-    const rows = filteredLogs.map(log => [
-      log.queue_entry?.plate_number || '',
-      log.queue_entry?.driver_name || '',
-      log.destination ? `${log.destination.code} - ${log.destination.name}` : '',
-      formatTime(log.dispatched_at),
-    ]);
-    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `dispatch-report-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const formatElapsedTime = (arrivalTime: string) => {
+    const mins = Math.round((Date.now() - new Date(arrivalTime).getTime()) / 60000);
+    if (mins < 60) return `${mins} min`;
+    const hours = Math.floor(mins / 60);
+    const remainingMins = mins % 60;
+    return `${hours}h ${remainingMins > 0 ? `${remainingMins}m` : ''}`;
   };
 
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header
-        associationName={t('appName')}
-        dispatcherName={user.name}
-        onLogout={handleLogout}
-      />
-
-      <main className="p-4 lg:p-6 max-w-[1200px] mx-auto">
-        {/* Admin Role Badge */}
-        <div className="mb-4">
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-            {t('admin')}
-          </Badge>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+      <main className="p-4 lg:p-8 max-w-[1600px] mx-auto">
+        {/* Title */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold">{t('adminDashboard') || 'Admin Dashboard'}</h1>
+          <p className="text-muted-foreground mt-1">
+            Real-time live queue overview
+          </p>
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-          <div className="stat-card">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{activeDispatchers}</p>
-                <p className="text-sm text-muted-foreground">{t('totalDispatchers')}</p>
-              </div>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-accent/10">
-                <MapPin className="h-5 w-5 text-accent" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{totalFermatas}</p>
-                <p className="text-sm text-muted-foreground">{t('totalDestinations')}</p>
-              </div>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-success/10">
-                <Car className="h-5 w-5 text-success" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{waitingCount}</p>
-                <p className="text-sm text-muted-foreground">{t('taxisToday')}</p>
-              </div>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-warning/10">
-                <Send className="h-5 w-5 text-warning" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{dispatchedToday}</p>
-                <p className="text-sm text-muted-foreground">{t('dispatchesToday')}</p>
-              </div>
-            </div>
-          </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Card className="bg-gradient-to-br from-blue-600 to-blue-700 text-white border-0 shadow-xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm opacity-90">Dispatchers</CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-end justify-between">
+              <Users className="h-10 w-10 opacity-80" />
+              <p className="text-4xl font-bold">{activeDispatchers}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-600 to-green-700 text-white border-0 shadow-xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm opacity-90">Destinations</CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-end justify-between">
+              <MapPin className="h-10 w-10 opacity-80" />
+              <p className="text-4xl font-bold">{totalDestinations}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-amber-600 to-amber-700 text-white border-0 shadow-xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm opacity-90">Waiting</CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-end justify-between">
+              <Clock className="h-10 w-10 opacity-80" />
+              <p className="text-4xl font-bold">{waitingTaxis}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-red-600 to-red-700 text-white border-0 shadow-xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm opacity-90">Not Ready</CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-end justify-between">
+              <AlertCircle className="h-10 w-10 opacity-80" />
+              <p className="text-4xl font-bold">{notReadyTaxis}</p>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Quick Actions */}
-        <div className="mb-6 p-4 bg-muted/30 rounded-xl">
-          <h3 className="font-medium mb-3">{t('adminPanel')}</h3>
-          <div className="flex flex-wrap gap-2">
-            <Link to="/admin/dispatchers">
-              <Button variant="outline" size="sm">
+        {/* Management Buttons */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Management</CardTitle>
+            <CardDescription>Quick access to system settings</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Link to="/admin/dispatchers" className="block">
+              <Button className="w-full" variant="outline">
                 <Users className="h-4 w-4 mr-2" />
-                {t('manageDispatchers')}
+                Dispatchers
               </Button>
             </Link>
-            <Link to="/admin/fermatas">
-              <Button variant="outline" size="sm">
+            <Link to="/admin/fermatas" className="block">
+              <Button className="w-full" variant="outline">
                 <MapPin className="h-4 w-4 mr-2" />
-                {t('manageFermatas')}
+                Destinations
               </Button>
             </Link>
-            <Link to="/admin/drivers">
-              <Button variant="outline" size="sm">
+            <Link to="/admin/drivers" className="block">
+              <Button className="w-full" variant="outline">
                 <UserPlus className="h-4 w-4 mr-2" />
-                {t('manageDrivers')}
+                Drivers
               </Button>
             </Link>
-            <Link to="/admin/taxis">
-              <Button variant="outline" size="sm">
+            <Link to="/admin/taxis" className="block">
+              <Button className="w-full" variant="outline">
                 <Car className="h-4 w-4 mr-2" />
-                {t('manageTaxis')}
+                Taxis
               </Button>
             </Link>
-            <Link to="/admin/reports">
-              <Button variant="default" size="sm">
-                <FileText className="h-4 w-4 mr-2" />
-                {t('reports')}
-              </Button>
-            </Link>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Today's Dispatches Table */}
-        <div className="bg-card rounded-xl border p-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-            <h2 className="text-lg font-semibold">{t('todayDispatches')}</h2>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-              <Select value={destinationFilter} onValueChange={setDestinationFilter}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder={t('filterByDestination')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('allDestinations')}</SelectItem>
-                  {fermatas.map(f => (
-                    <SelectItem key={f.id} value={f.id}>{f.code} - {f.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="sm" onClick={exportCSV} className="w-full sm:w-auto">
-                <Download className="h-4 w-4 mr-2" />
-                {t('downloadCSV')}
-              </Button>
+        {/* Live Queue Status - Full Focus */}
+       {/* Live Queue Status - Your Favorite Design, Perfected */}
+<Card className="shadow-xl">
+  <CardHeader>
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <CardTitle className="flex items-center gap-2 text-2xl">
+          <Activity className="h-6 w-6" />
+          Live Queue Status
+        </CardTitle>
+        <CardDescription className="text-base">
+          {queueEntries.length} active taxis across all dispatchers
+        </CardDescription>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+        <Select value={destinationFilter} onValueChange={setDestinationFilter}>
+          <SelectTrigger className="w-full sm:w-64">
+            <SelectValue placeholder="All Destinations" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Destinations</SelectItem>
+            {fermatas.map(f => (
+              <SelectItem key={f.id} value={f.id}>
+                {f.code} - {f.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={dispatcherFilter} onValueChange={setDispatcherFilter}>
+          <SelectTrigger className="w-full sm:w-64">
+            <SelectValue placeholder="All Dispatchers" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Dispatchers</SelectItem>
+            {dispatchers.map(d => (
+              <SelectItem key={d.id} value={d.id}>
+                {d.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  </CardHeader>
+  <CardContent>
+    {queueEntries.length === 0 ? (
+      <div className="text-center py-16">
+        <Car className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
+        <p className="text-xl text-muted-foreground">Queue is empty</p>
+        <p className="text-sm text-muted-foreground mt-2">No taxis waiting or not ready</p>
+      </div>
+    ) : (
+      <div className="space-y-4">
+        {filteredQueue.map(entry => {
+          const mins = Math.round((Date.now() - new Date(entry.arrival_time).getTime()) / 60000);
+          const fermata = fermatas.find(f => f.id === entry.fermata_id);
+          const dispatcher = dispatchers.find(d => d.id === entry.dispatcher_id);
+
+          return (
+            <div 
+              key={entry.id} 
+              className="flex flex-col sm:flex-row sm:items-center justify-between p-6 rounded-xl border bg-card hover:shadow-lg transition-all duration-200"
+            >
+              <div className="flex-1 mb-4 sm:mb-0">
+                <div className="flex items-center gap-4 mb-3">
+                  <p className="text-3xl font-bold tracking-tight">{entry.plate_number}</p>
+                  <Badge 
+                    variant={entry.status === 'waiting' ? 'default' : 'destructive'}
+                    className="text-base px-4 py-1"
+                  >
+                    {entry.status === 'waiting' ? 'Waiting' : 'Not Ready'}
+                  </Badge>
+                </div>
+                <div className="flex flex-wrap gap-4 text-base text-muted-foreground">
+                  <span className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    {entry.driver_name}
+                  </span>
+                  {fermata && (
+                    <span className="flex items-center gap-2">
+                      <MapPin className="h-5 w-5" />
+                      {fermata.code} - {fermata.name}
+                    </span>
+                  )}
+                  {dispatcher && (
+                    <span className="flex items-center gap-2">
+                      <Activity className="h-5 w-5" />
+                      {dispatcher.name}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="text-right">
+                <p className="text-4xl font-bold text-primary">
+                  {formatElapsedTime(entry.arrival_time)}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">elapsed time</p>
+              </div>
             </div>
-          </div>
-          <div className="overflow-x-auto -mx-4 sm:mx-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="whitespace-nowrap">{t('plateNumber')}</TableHead>
-                  <TableHead className="whitespace-nowrap">{t('driverName')}</TableHead>
-                  <TableHead className="whitespace-nowrap">{t('destination')}</TableHead>
-                  <TableHead className="whitespace-nowrap">{t('dispatchTime')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredLogs.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                      {t('noDispatchesFound')}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredLogs.map((log, idx) => (
-                    <TableRow key={`${log.id}-${idx}`}>
-                      <TableCell className="font-mono">{log.queue_entry?.plate_number || ''}</TableCell>
-                      <TableCell>{log.queue_entry?.driver_name || ''}</TableCell>
-                      <TableCell>{log.destination ? `${log.destination.code} - ${log.destination.name}` : ''}</TableCell>
-                      <TableCell>{formatTime(log.dispatched_at)}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
+          );
+        })}
+      </div>
+    )}
+  </CardContent>
+</Card>
       </main>
     </div>
   );

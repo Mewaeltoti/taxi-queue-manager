@@ -166,11 +166,7 @@ const Taxis = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header
-        associationName="Metro Taxi Association"
-        dispatcherName={user.name}
-        onLogout={handleLogout}
-      />
+     
 
       <main className="p-4 lg:p-6 max-w-[1200px] mx-auto">
         <div className="flex items-center gap-3 mb-6">

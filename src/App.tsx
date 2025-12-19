@@ -17,13 +17,17 @@ import ReportCenter from "./pages/admin/ReportCenter";
 import AuditLogs from "./pages/admin/AuditLogs";
 import NotFound from "./pages/NotFound";
 import { LanguageProvider } from "./contexts/LanguageContext";
-
+import { MainLayout } from "./components/layout/MainLayout";
 
 const queryClient = new QueryClient();
 
 // Protected route wrapper
-function ProtectedRoute({ children, adminOnly = false, dispatcherOnly = false }: {
-  children: React.ReactNode;
+function ProtectedRoute({ 
+  children, 
+  adminOnly = false, 
+  dispatcherOnly = false 
+}: { 
+  children: React.ReactNode; 
   adminOnly?: boolean;
   dispatcherOnly?: boolean;
 }) {
@@ -69,72 +73,106 @@ function HomeRedirect() {
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/login" element={
-        <AuthRoute>
-          <Login />
-        </AuthRoute>
-      } />
+      {/* Public routes */}
+      <Route path="/login" element={<AuthRoute><Login /></AuthRoute>} />
       <Route path="/" element={<HomeRedirect />} />
 
-      {/* Dispatcher Routes */}
-      <Route path="/dispatcher" element={
-        <ProtectedRoute dispatcherOnly>
-          <DispatcherDashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/dispatcher/reports" element={
-        <ProtectedRoute dispatcherOnly>
-          <DispatcherReports />
-        </ProtectedRoute>
-      } />
+      {/* All protected routes wrapped in MainLayout (fixed header) */}
+      <Route element={<MainLayout  />}>
+        {/* Dispatcher Routes */}
+        <Route 
+          path="/dispatcher" 
+          element={
+            <ProtectedRoute dispatcherOnly>
+              <DispatcherDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dispatcher/reports" 
+          element={
+            <ProtectedRoute dispatcherOnly>
+              <DispatcherReports />
+            </ProtectedRoute>
+          } 
+        />
 
+        {/* Admin Routes */}
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute adminOnly>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/reports" 
+          element={
+            <ProtectedRoute adminOnly>
+              <Reports />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/fermatas" 
+          element={
+            <ProtectedRoute adminOnly>
+              <Fermatas />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/dispatchers" 
+          element={
+            <ProtectedRoute adminOnly>
+              <Dispatchers />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/drivers" 
+          element={
+            <ProtectedRoute adminOnly>
+              <Drivers />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/taxis" 
+          element={
+            <ProtectedRoute adminOnly>
+              <Taxis />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/users" 
+          element={
+            <ProtectedRoute adminOnly>
+              <Dispatchers />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/reports" 
+          element={
+            <ProtectedRoute adminOnly>
+              <ReportCenter />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/audit-logs" 
+          element={
+            <ProtectedRoute adminOnly>
+              <AuditLogs />
+            </ProtectedRoute>
+          } 
+        />
+      </Route>
 
-      {/* Admin Routes */}
-      <Route path="/admin" element={
-        <ProtectedRoute adminOnly>
-          <AdminDashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/reports" element={
-        <ProtectedRoute adminOnly>
-          <Reports />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/fermatas" element={
-        <ProtectedRoute adminOnly>
-          <Fermatas />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/dispatchers" element={
-        <ProtectedRoute adminOnly>
-          <Dispatchers />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/drivers" element={
-        <ProtectedRoute adminOnly>
-          <Drivers />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/taxis" element={
-        <ProtectedRoute adminOnly>
-          <Taxis />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/users" element={
-        <ProtectedRoute adminOnly>
-          <Dispatchers />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/reports" element={
-        <ProtectedRoute adminOnly>
-          <ReportCenter />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/audit-logs" element={
-        <ProtectedRoute adminOnly>
-          <AuditLogs />
-        </ProtectedRoute>
-      } />
+      {/* 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -148,9 +186,7 @@ const App = () => (
       <BrowserRouter>
         <LanguageProvider>
           <AuthProvider>
-
             <AppRoutes />
-
           </AuthProvider>
         </LanguageProvider>
       </BrowserRouter>

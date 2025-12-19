@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, lazy } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Plus, Send, Car, Download, FileText } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
@@ -85,10 +85,10 @@ const DispatcherDashboard = () => {
   const assignedFermatas = fermatas.filter(f => user?.assigned_fermata_ids?.includes(f.id));
   const primaryFermata = assignedFermatas[0];
 
-  const activeEntries = queueEntries.filter(e =>
-    ['waiting', 'not_ready', 'returned'].includes(e.status)
+  const activeEntries = useMemo(() => 
+    queueEntries.filter(e => ['waiting', 'not_ready', 'returned'].includes(e.status)),
+    [queueEntries]
   );
-
   const waitingCount = activeEntries.length;
   const nextDispatchableTaxi = activeEntries.find(e => e.status === 'waiting' || e.status === 'returned');
   const dispatchedToday = dispatchLogs.length;
@@ -191,19 +191,26 @@ const DispatcherDashboard = () => {
   };
 
   const handleStatusChange = async (entryId: string, status: 'not_ready' | 'returned' | 'canceled' | 'waiting') => {
-    await supabase
+    const { error } = await supabase
       .from('queue_entries')
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', entryId);
-
-    // Refetch only this dispatcher's queue
+  
+    if (error) {
+      toast.error('Status update failed');
+      console.error(error);
+      return;
+    }
+  
+    // Refetch ONLY this dispatcher's queue
     const { data } = await supabase
       .from('queue_entries')
       .select('*')
       .eq('dispatcher_id', user.id)
       .order('queue_number', { ascending: true });
+  
     setQueueEntries(data || []);
-
+  
     toast.success('Status updated');
   };
 
@@ -231,16 +238,13 @@ const DispatcherDashboard = () => {
     toast.success('CSV exported!');
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  
 
   if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background">
-      <Header associationName={t('appName')} dispatcherName={user.name} onLogout={handleLogout} />
+     
 
       <main className="p-4 lg:p-6 max-w-[1400px] mx-auto">
         {/* Assigned Destination */}

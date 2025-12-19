@@ -99,11 +99,7 @@ const ReportCenter = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header
-        associationName={t('appName')}
-        dispatcherName={user.name}
-        onLogout={handleLogout}
-      />
+      
 
       <main className="p-4 lg:p-6 max-w-[1600px] mx-auto">
         {/* Page Header */}

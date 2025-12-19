@@ -85,12 +85,7 @@ const DispatcherReports = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header
-        associationName={t('appName')}
-        dispatcherName={user.name}
-        onLogout={handleLogout}
-      />
-
+     
       <main className="p-4 lg:p-6 max-w-[1400px] mx-auto">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
