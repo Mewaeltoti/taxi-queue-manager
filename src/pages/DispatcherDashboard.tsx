@@ -19,7 +19,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const DispatcherDashboard = () => {
-  const { user } from useAuth();
+  const { user } = useAuth();
   const { t } = useLanguage();
 
   const [queueEntries, setQueueEntries] = useState<any[]>([]);
