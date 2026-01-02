@@ -5,6 +5,7 @@ import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useReports, useResolveReport, useFermatas, useDispatchers } from '@/hooks/useSupabaseData';
@@ -98,21 +99,21 @@ const ReportCenter = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background">
-      
-
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       <main className="p-4 lg:p-6 max-w-[1600px] mx-auto">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <Link to="/admin">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="hover:bg-primary/10">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
-                <Flag className="h-6 w-6" />
+                <div className="p-2 rounded-lg bg-destructive/10">
+                  <Flag className="h-5 w-5 text-destructive" />
+                </div>
                 {t('reportCenter')}
               </h1>
               <p className="text-muted-foreground">
@@ -123,66 +124,73 @@ const ReportCenter = () => {
         </div>
 
         {/* Filters */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div>
-            <label className="text-sm font-medium mb-2 block">{t('filterByFermata')}</label>
-            <Select value={selectedFermata} onValueChange={setSelectedFermata}>
-              <SelectTrigger>
-                <SelectValue placeholder={t('allFermatas')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('allFermatas')}</SelectItem>
-                {fermatas.map(f => (
-                  <SelectItem key={f.id} value={f.id}>
-                    {f.code} - {f.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-2 block">{t('filterByDispatcher')}</label>
-            <Select value={selectedDispatcher} onValueChange={setSelectedDispatcher}>
-              <SelectTrigger>
-                <SelectValue placeholder={t('allDispatchers')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('allDispatchers')}</SelectItem>
-                {dispatchers.map(d => (
-                  <SelectItem key={d.id} value={d.id}>
-                    {d.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-2 block">{t('filterByStatus')}</label>
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger>
-                <SelectValue placeholder={t('allStatuses')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('allStatuses')}</SelectItem>
-                <SelectItem value="open">{t('open')}</SelectItem>
-                <SelectItem value="in_progress">{t('inProgress')}</SelectItem>
-                <SelectItem value="resolved">{t('resolved')}</SelectItem>
-                <SelectItem value="closed">{t('closed')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <Card className="mb-6 glass-card">
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block text-muted-foreground">{t('filterByFermata')}</label>
+                <Select value={selectedFermata} onValueChange={setSelectedFermata}>
+                  <SelectTrigger className="modern-input">
+                    <SelectValue placeholder={t('allFermatas')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('allFermatas')}</SelectItem>
+                    {fermatas.map(f => (
+                      <SelectItem key={f.id} value={f.id}>
+                        {f.code} - {f.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block text-muted-foreground">{t('filterByDispatcher')}</label>
+                <Select value={selectedDispatcher} onValueChange={setSelectedDispatcher}>
+                  <SelectTrigger className="modern-input">
+                    <SelectValue placeholder={t('allDispatchers')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('allDispatchers')}</SelectItem>
+                    {dispatchers.map(d => (
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block text-muted-foreground">{t('filterByStatus')}</label>
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger className="modern-input">
+                    <SelectValue placeholder={t('allStatuses')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('allStatuses')}</SelectItem>
+                    <SelectItem value="open">{t('open')}</SelectItem>
+                    <SelectItem value="in_progress">{t('inProgress')}</SelectItem>
+                    <SelectItem value="resolved">{t('resolved')}</SelectItem>
+                    <SelectItem value="closed">{t('closed')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Reports List */}
-        <div className="bg-card rounded-xl border overflow-hidden">
+        <Card className="bg-card/80 backdrop-blur-sm border-0 shadow-xl overflow-hidden">
           {loading ? (
-            <div className="p-8 text-center text-muted-foreground">
+            <div className="p-12 text-center text-muted-foreground">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
               {t('loading')}
             </div>
           ) : reports.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
-              <Flag className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>{t('noReports')}</p>
+            <div className="p-12 text-center text-muted-foreground">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted/50 flex items-center justify-center">
+                <Flag className="h-8 w-8 opacity-50" />
+              </div>
+              <p className="font-medium">{t('noReports')}</p>
             </div>
           ) : (
             <div className="divide-y">
@@ -289,7 +297,7 @@ const ReportCenter = () => {
               ))}
             </div>
           )}
-        </div>
+        </Card>
       </main>
 
       {/* Resolve Modal */}

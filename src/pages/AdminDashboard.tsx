@@ -84,11 +84,13 @@ const AdminDashboard = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       <main className="p-4 lg:p-8 max-w-[1600px] mx-auto">
         {/* Title */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">{t('adminDashboard') || 'Admin Dashboard'}</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            {t('adminDashboard') || 'Admin Dashboard'}
+          </h1>
           <p className="text-muted-foreground mt-1">
             Real-time live queue overview
           </p>
@@ -96,76 +98,87 @@ const AdminDashboard = () => {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-gradient-to-br from-blue-600 to-blue-700 text-white border-0 shadow-xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm opacity-90">Dispatchers</CardTitle>
+          <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground border-0 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 hover:-translate-y-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium opacity-90">Dispatchers</CardTitle>
             </CardHeader>
             <CardContent className="flex items-end justify-between">
-              <Users className="h-10 w-10 opacity-80" />
+              <div className="p-2 rounded-lg bg-white/10 backdrop-blur-sm">
+                <Users className="h-8 w-8" />
+              </div>
               <p className="text-4xl font-bold">{activeDispatchers}</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-600 to-green-700 text-white border-0 shadow-xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm opacity-90">Destinations</CardTitle>
+          <Card className="bg-gradient-to-br from-success to-success/80 text-success-foreground border-0 shadow-lg shadow-success/20 hover:shadow-xl hover:shadow-success/30 transition-all duration-300 hover:-translate-y-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium opacity-90">Destinations</CardTitle>
             </CardHeader>
             <CardContent className="flex items-end justify-between">
-              <MapPin className="h-10 w-10 opacity-80" />
+              <div className="p-2 rounded-lg bg-white/10 backdrop-blur-sm">
+                <MapPin className="h-8 w-8" />
+              </div>
               <p className="text-4xl font-bold">{totalDestinations}</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-amber-600 to-amber-700 text-white border-0 shadow-xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm opacity-90">Waiting</CardTitle>
+          <Card className="bg-gradient-to-br from-warning to-warning/80 text-warning-foreground border-0 shadow-lg shadow-warning/20 hover:shadow-xl hover:shadow-warning/30 transition-all duration-300 hover:-translate-y-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium opacity-90">Waiting</CardTitle>
             </CardHeader>
             <CardContent className="flex items-end justify-between">
-              <Clock className="h-10 w-10 opacity-80" />
+              <div className="p-2 rounded-lg bg-white/10 backdrop-blur-sm">
+                <Clock className="h-8 w-8" />
+              </div>
               <p className="text-4xl font-bold">{waitingTaxis}</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-red-600 to-red-700 text-white border-0 shadow-xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm opacity-90">Not Ready</CardTitle>
+          <Card className="bg-gradient-to-br from-destructive to-destructive/80 text-destructive-foreground border-0 shadow-lg shadow-destructive/20 hover:shadow-xl hover:shadow-destructive/30 transition-all duration-300 hover:-translate-y-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium opacity-90">Not Ready</CardTitle>
             </CardHeader>
             <CardContent className="flex items-end justify-between">
-              <AlertCircle className="h-10 w-10 opacity-80" />
+              <div className="p-2 rounded-lg bg-white/10 backdrop-blur-sm">
+                <AlertCircle className="h-8 w-8" />
+              </div>
               <p className="text-4xl font-bold">{notReadyTaxis}</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Management Buttons */}
-        <Card className="mb-8">
+        <Card className="mb-8 glass-card">
           <CardHeader>
-            <CardTitle>Management</CardTitle>
-            <CardDescription>Quick access to system settings</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Quick Actions
+            </CardTitle>
+            <CardDescription>Manage system resources</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Link to="/admin/dispatchers" className="block">
-              <Button className="w-full" variant="outline">
-                <Users className="h-4 w-4 mr-2" />
-                Dispatchers
+              <Button className="w-full h-16 flex-col gap-1 hover:scale-105 transition-transform" variant="outline">
+                <Users className="h-5 w-5 text-primary" />
+                <span className="text-xs">Dispatchers</span>
               </Button>
             </Link>
             <Link to="/admin/fermatas" className="block">
-              <Button className="w-full" variant="outline">
-                <MapPin className="h-4 w-4 mr-2" />
-                Destinations
+              <Button className="w-full h-16 flex-col gap-1 hover:scale-105 transition-transform" variant="outline">
+                <MapPin className="h-5 w-5 text-success" />
+                <span className="text-xs">Destinations</span>
               </Button>
             </Link>
             <Link to="/admin/drivers" className="block">
-              <Button className="w-full" variant="outline">
-                <UserPlus className="h-4 w-4 mr-2" />
-                Drivers
+              <Button className="w-full h-16 flex-col gap-1 hover:scale-105 transition-transform" variant="outline">
+                <UserPlus className="h-5 w-5 text-warning" />
+                <span className="text-xs">Drivers</span>
               </Button>
             </Link>
             <Link to="/admin/taxis" className="block">
-              <Button className="w-full" variant="outline">
-                <Car className="h-4 w-4 mr-2" />
-                Taxis
+              <Button className="w-full h-16 flex-col gap-1 hover:scale-105 transition-transform" variant="outline">
+                <Car className="h-5 w-5 text-destructive" />
+                <span className="text-xs">Taxis</span>
               </Button>
             </Link>
           </CardContent>
@@ -173,15 +186,17 @@ const AdminDashboard = () => {
 
         {/* Live Queue Status - Full Focus */}
        {/* Live Queue Status - Your Favorite Design, Perfected */}
-<Card className="shadow-xl">
-  <CardHeader>
+<Card className="shadow-xl border-0 bg-card/80 backdrop-blur-sm">
+  <CardHeader className="border-b bg-muted/30">
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <CardTitle className="flex items-center gap-2 text-2xl">
-          <Activity className="h-6 w-6" />
+        <CardTitle className="flex items-center gap-2 text-xl">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Activity className="h-5 w-5 text-primary" />
+          </div>
           Live Queue Status
         </CardTitle>
-        <CardDescription className="text-base">
+        <CardDescription className="mt-1">
           {queueEntries.length} active taxis across all dispatchers
         </CardDescription>
       </div>
@@ -218,10 +233,12 @@ const AdminDashboard = () => {
   </CardHeader>
   <CardContent>
     {queueEntries.length === 0 ? (
-      <div className="text-center py-16">
-        <Car className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
-        <p className="text-xl text-muted-foreground">Queue is empty</p>
-        <p className="text-sm text-muted-foreground mt-2">No taxis waiting or not ready</p>
+      <div className="text-center py-20">
+        <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-muted/50 flex items-center justify-center">
+          <Car className="h-10 w-10 text-muted-foreground/50" />
+        </div>
+        <p className="text-xl font-medium text-muted-foreground">Queue is empty</p>
+        <p className="text-sm text-muted-foreground/70 mt-1">No taxis waiting or not ready</p>
       </div>
     ) : (
       <div className="space-y-4">
@@ -233,32 +250,32 @@ const AdminDashboard = () => {
           return (
             <div 
               key={entry.id} 
-              className="flex flex-col sm:flex-row sm:items-center justify-between p-6 rounded-xl border bg-card hover:shadow-lg transition-all duration-200"
+              className="flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-xl border bg-card hover:shadow-md hover:border-primary/20 transition-all duration-200 group"
             >
               <div className="flex-1 mb-4 sm:mb-0">
-                <div className="flex items-center gap-4 mb-3">
-                  <p className="text-3xl font-bold tracking-tight">{entry.plate_number}</p>
+                <div className="flex items-center gap-3 mb-2">
+                  <p className="text-2xl font-bold tracking-tight font-mono group-hover:text-primary transition-colors">{entry.plate_number}</p>
                   <Badge 
                     variant={entry.status === 'waiting' ? 'default' : 'destructive'}
-                    className="text-base px-4 py-1"
+                    className="text-xs px-3 py-0.5"
                   >
                     {entry.status === 'waiting' ? 'Waiting' : 'Not Ready'}
                   </Badge>
                 </div>
-                <div className="flex flex-wrap gap-4 text-base text-muted-foreground">
-                  <span className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <Users className="h-4 w-4" />
                     {entry.driver_name}
                   </span>
                   {fermata && (
-                    <span className="flex items-center gap-2">
-                      <MapPin className="h-5 w-5" />
+                    <span className="flex items-center gap-1.5">
+                      <MapPin className="h-4 w-4" />
                       {fermata.code} - {fermata.name}
                     </span>
                   )}
                   {dispatcher && (
-                    <span className="flex items-center gap-2">
-                      <Activity className="h-5 w-5" />
+                    <span className="flex items-center gap-1.5">
+                      <Activity className="h-4 w-4" />
                       {dispatcher.name}
                     </span>
                   )}
@@ -266,10 +283,10 @@ const AdminDashboard = () => {
               </div>
 
               <div className="text-right">
-                <p className="text-4xl font-bold text-primary">
+                <p className="text-3xl font-bold text-primary tabular-nums">
                   {formatElapsedTime(entry.arrival_time)}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">elapsed time</p>
+                <p className="text-xs text-muted-foreground mt-0.5">elapsed</p>
               </div>
             </div>
           );
