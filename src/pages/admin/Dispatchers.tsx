@@ -177,65 +177,71 @@ const Dispatchers = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-     
-      <main className="p-4 lg:p-6 max-w-[1200px] mx-auto">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+    <div className="min-h-screen page-container">
+      <main className="content-container">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 animate-fade-in">
           <div className="flex items-center gap-3">
             <Link to="/admin">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-primary/10">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold">Manage Dispatchers</h1>
-              <p className="text-muted-foreground">Create and manage dispatcher accounts</p>
+              <h1 className="section-title">{t('manageDispatchers') || 'Manage Dispatchers'}</h1>
+              <p className="text-sm text-muted-foreground">{t('dispatcherDescription') || 'Create and manage dispatcher accounts'}</p>
             </div>
           </div>
-          <Button onClick={() => openModal()}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Dispatcher
+          <Button onClick={() => openModal()} className="w-full sm:w-auto h-11 rounded-xl gap-2 shadow-lg shadow-primary/20">
+            <Plus className="h-4 w-4" />
+            {t('addDispatcher') || 'Add Dispatcher'}
           </Button>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Dispatchers Grid */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {dispatchers.length === 0 ? (
-            <p className="col-span-full text-center py-8 text-muted-foreground">
-              No dispatchers yet. Click "Add Dispatcher" to create one.
-            </p>
+            <div className="col-span-full py-16 text-center animate-fade-in">
+              <div className="h-16 w-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                <UserCog className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground">
+                {t('noDispatchers') || 'No dispatchers yet. Click "Add Dispatcher" to create one.'}
+              </p>
+            </div>
           ) : (
-            dispatchers.map(dispatcher => (
-              <Card key={dispatcher.id} className="relative">
-                <CardHeader className="pb-2">
+            dispatchers.map((dispatcher, i) => (
+              <Card key={dispatcher.id} className="card-hover overflow-hidden animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
+                <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <UserCog className="h-5 w-5 text-primary" />
+                      <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center ring-2 ring-primary/10">
+                        <UserCog className="h-6 w-6 text-primary" />
                       </div>
-                      <div>
-                        <CardTitle className="text-base">{dispatcher.name}</CardTitle>
-                        <p className="text-sm text-muted-foreground">{dispatcher.email}</p>
+                      <div className="min-w-0">
+                        <CardTitle className="text-base truncate">{dispatcher.name}</CardTitle>
+                        <p className="text-sm text-muted-foreground truncate">{dispatcher.email}</p>
                       </div>
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="text-destructive"
+                      className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
                       onClick={() => handleDelete(dispatcher.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium flex items-center gap-1">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      Assigned Destination:
-                    </p>
-                    <div className="flex flex-wrap gap-1">
+                <CardContent className="pt-0">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <MapPin className="h-4 w-4 text-primary shrink-0" />
+                      <span className="font-medium text-muted-foreground">{t('assignedDestination') || 'Destination'}:</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
                       {dispatcher.assigned_fermata_ids.map(id => (
-                        <Badge key={id} variant="secondary" className="text-xs">
+                        <Badge key={id} variant="secondary" className="text-xs bg-primary/10 text-primary border border-primary/20">
                           {getFermataName(id)}
                         </Badge>
                       ))}
@@ -244,10 +250,10 @@ const Dispatchers = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full mt-4"
+                    className="w-full mt-4 h-10 rounded-xl hover:bg-primary/5 hover:border-primary/30"
                     onClick={() => openModal(dispatcher)}
                   >
-                    Edit
+                    {t('edit') || 'Edit'}
                   </Button>
                 </CardContent>
               </Card>
@@ -256,26 +262,28 @@ const Dispatchers = () => {
         </div>
       </main>
 
+      {/* Add/Edit Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md mx-4 rounded-2xl">
           <DialogHeader>
-            <DialogTitle>
-              {editingDispatcher ? 'Edit Dispatcher' : 'Add New Dispatcher'}
+            <DialogTitle className="text-xl">
+              {editingDispatcher ? t('editDispatcher') || 'Edit Dispatcher' : t('addNewDispatcher') || 'Add New Dispatcher'}
             </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name" className="text-sm font-medium">{t('fullName') || 'Full Name'}</Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                className="modern-input"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium">{t('email') || 'Email'}</Label>
               <Input
                 id="email"
                 type="email"
@@ -283,12 +291,13 @@ const Dispatchers = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={!!editingDispatcher}
+                className="modern-input"
               />
             </div>
 
             {!editingDispatcher && (
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-sm font-medium">{t('password') || 'Password'}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -296,18 +305,19 @@ const Dispatchers = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={6}
-                  placeholder="Set a strong password"
+                  placeholder={t('setPassword') || 'Set a strong password'}
+                  className="modern-input"
                 />
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label>Assign Destination</Label>
-              <RadioGroup value={selectedFermataId} onValueChange={setSelectedFermataId}>
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">{t('assignDestination') || 'Assign Destination'}</Label>
+              <RadioGroup value={selectedFermataId} onValueChange={setSelectedFermataId} className="space-y-2">
                 {fermatas.map(fermata => (
-                  <div key={fermata.id} className="flex items-center space-x-2 py-1">
+                  <div key={fermata.id} className="flex items-center space-x-3 p-3 rounded-xl border hover:bg-muted/50 transition-colors cursor-pointer">
                     <RadioGroupItem value={fermata.id} id={fermata.id} />
-                    <Label htmlFor={fermata.id} className="cursor-pointer font-normal">
+                    <Label htmlFor={fermata.id} className="cursor-pointer font-normal flex-1">
                       {fermata.code} - {fermata.name}
                     </Label>
                   </div>
@@ -316,11 +326,11 @@ const Dispatchers = () => {
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
-                Cancel
+              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="flex-1 h-11 rounded-xl">
+                {t('cancel') || 'Cancel'}
               </Button>
-              <Button type="submit">
-                {editingDispatcher ? 'Save Changes' : 'Create Dispatcher'}
+              <Button type="submit" className="flex-1 h-11 rounded-xl">
+                {editingDispatcher ? t('saveChanges') || 'Save Changes' : t('createDispatcher') || 'Create Dispatcher'}
               </Button>
             </div>
           </form>

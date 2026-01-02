@@ -212,140 +212,176 @@ const [selectedTaxi, setSelectedTaxi] = useState<string>('');
     toast.success('CSV exported!');
   };
  
-  if (!user) return null;
-  return (
-    <div className="min-h-screen bg-background">
-     
-      <main className="p-4 lg:p-6 max-w-[1400px] mx-auto">
-        {/* Assigned Destination */}
-        <div className="mb-4">
-          <p className="text-sm text-muted-foreground mb-2">Your Assigned Destination:</p>
-          <div className="flex flex-wrap gap-2">
-            {assignedFermatas.map(f => (
-              <Badge key={f.id} variant="secondary" className="px-3 py-1 text-sm">
-                {f.code} - {f.name}
-              </Badge>
-            ))}
-          </div>
-        </div>
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="p-4 rounded-lg bg-card border text-center">
-            <Car className="h-8 w-8 mx-auto text-accent mb-2" />
-            <p className="text-2xl font-bold">{waitingCount}</p>
-            <p className="text-sm text-muted-foreground">In Your Queue</p>
-          </div>
-          <div className="p-4 rounded-lg bg-card border text-center">
-            <Send className="h-8 w-8 mx-auto text-success mb-2" />
-            <p className="text-2xl font-bold">{dispatchedToday}</p>
-            <p className="text-sm text-muted-foreground">Dispatched Today</p>
-          </div>
-        </div>
-        {/* Action Bar */}
-        <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-          <h2 className="text-2xl font-bold">Your Taxi Queue</h2>
-          <div className="flex gap-3">
-            <Button onClick={() => setIsAddModalOpen(true)} variant="outline">
-              <Plus className="h-4 w-4 mr-2" />
-              Add to Queue
-            </Button>
-            <Button
-              onClick={handleDispatchNext}
-              disabled={!nextDispatchableTaxi || isLoading}
-              className="bg-accent hover:bg-accent/90"
-            >
-              <Send className="h-4 w-4 mr-2" />
-              Dispatch Next
-            </Button>
-          </div>
-        </div>
-        {/* Queue Table */}
-        <QueueTableEnhanced
-          entries={queueEntries}
-          onStatusChange={handleStatusChange}
-          onReport={() => toast.success('Report submitted')}
-          isLoading={isLoading}
-        />
-        {/* Today's Log */}
-        {dispatchLogs.length > 0 && (
-          <div className="mt-8">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Your Dispatches Today
-              </h3>
-              <Button onClick={exportTodaysLogToCSV} variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export CSV
-              </Button>
-            </div>
-            <div className="bg-card rounded-lg border overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-muted/50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase">Plate</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase">Driver</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase">Destination</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase">Time</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {dispatchLogs.slice(0, 10).map(log => (
-                      <tr key={log.id}>
-                        <td className="px-4 py-3 font-medium">{log.queue_entry?.plate_number}</td>
-                        <td className="px-4 py-3">{log.queue_entry?.driver_name}</td>
-                        <td className="px-4 py-3">{log.fermata?.code} - {log.fermata?.name}</td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {new Date(log.dispatched_at).toLocaleTimeString('am-ET', { hour: '2-digit', minute: '2-digit' })}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
-      {/* Add to Queue Modal */}
-      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add Taxi to Your Queue</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="plate">Plate Number</Label>
-              <Input
-                id="plate"
-                placeholder="TX-1234"
-                value={plateNumber}
-                onChange={(e) => setPlateNumber(e.target.value)}
-                autoFocus
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="driver">Driver Name</Label>
-              <Input
-                id="driver"
-                placeholder="Full name"
-                value={driverName}
-                onChange={(e) => setDriverName(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddToQueue} disabled={isLoading}>
-              {isLoading ? 'Adding...' : 'Add to Queue'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
+  if (!user) return null;
+  return (
+    <div className="min-h-screen page-container">
+      <main className="content-container pb-24 sm:pb-6">
+        {/* Assigned Destination */}
+        <div className="mb-5 animate-fade-in">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-2 font-medium">{t('yourDestination') || 'Your Assigned Destination'}:</p>
+          <div className="flex flex-wrap gap-2">
+            {assignedFermatas.map(f => (
+              <Badge key={f.id} variant="secondary" className="px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium bg-primary/10 text-primary border border-primary/20">
+                {f.code} - {f.name}
+              </Badge>
+            ))}
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 animate-slide-up">
+          <div className="stat-card group">
+            <div className="stat-card-icon bg-accent/10 mb-3">
+              <Car className="h-6 w-6 text-accent" />
+            </div>
+            <p className="text-3xl sm:text-4xl font-bold text-foreground">{waitingCount}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-1">{t('inQueue') || 'In Your Queue'}</p>
+          </div>
+          <div className="stat-card group">
+            <div className="stat-card-icon bg-success/10 mb-3">
+              <Send className="h-6 w-6 text-success" />
+            </div>
+            <p className="text-3xl sm:text-4xl font-bold text-foreground">{dispatchedToday}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-1">{t('dispatchedToday') || 'Dispatched Today'}</p>
+          </div>
+        </div>
+
+        {/* Action Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 animate-slide-up" style={{ animationDelay: '100ms' }}>
+          <h2 className="section-title">{t('yourQueue') || 'Your Taxi Queue'}</h2>
+          <div className="hidden sm:flex gap-3">
+            <Button onClick={() => setIsAddModalOpen(true)} variant="outline" className="rounded-xl h-11 gap-2">
+              <Plus className="h-4 w-4" />
+              {t('addToQueue') || 'Add to Queue'}
+            </Button>
+            <Button
+              onClick={handleDispatchNext}
+              disabled={!nextDispatchableTaxi || isLoading}
+              className="dispatch-button h-11 gap-2"
+            >
+              <Send className="h-4 w-4" />
+              {t('dispatchNext') || 'Dispatch Next'}
+            </Button>
+          </div>
+        </div>
+
+        {/* Queue Table */}
+        <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
+          <QueueTableEnhanced
+            entries={queueEntries}
+            onStatusChange={handleStatusChange}
+            onReport={() => toast.success('Report submitted')}
+            isLoading={isLoading}
+          />
+        </div>
+
+        {/* Today's Log */}
+        {dispatchLogs.length > 0 && (
+          <div className="mt-8 animate-fade-in" style={{ animationDelay: '200ms' }}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                {t('yourDispatchesToday') || "Your Dispatches Today"}
+              </h3>
+              <Button onClick={exportTodaysLogToCSV} variant="outline" size="sm" className="rounded-xl gap-2 w-full sm:w-auto">
+                <Download className="h-4 w-4" />
+                {t('exportCSV') || 'Export CSV'}
+              </Button>
+            </div>
+            <div className="premium-card overflow-hidden">
+              <div className="overflow-x-auto scrollbar-hide">
+                <table className="w-full">
+                  <thead className="bg-muted/50 border-b">
+                    <tr>
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('plate') || 'Plate'}</th>
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden sm:table-cell">{t('driver') || 'Driver'}</th>
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('destination') || 'Dest.'}</th>
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('time') || 'Time'}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/50">
+                    {dispatchLogs.slice(0, 10).map((log, i) => (
+                      <tr key={log.id} className="hover:bg-muted/30 transition-colors animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
+                        <td className="px-3 sm:px-4 py-3 font-semibold text-sm">{log.queue_entry?.plate_number}</td>
+                        <td className="px-3 sm:px-4 py-3 text-sm hidden sm:table-cell">{log.queue_entry?.driver_name}</td>
+                        <td className="px-3 sm:px-4 py-3 text-sm">
+                          <Badge variant="secondary" className="text-xs">{log.fermata?.code}</Badge>
+                        </td>
+                        <td className="px-3 sm:px-4 py-3 text-sm text-muted-foreground">
+                          {new Date(log.dispatched_at).toLocaleTimeString('am-ET', { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Mobile Bottom Action Bar */}
+      <div className="mobile-bottom-nav sm:hidden">
+        <div className="flex gap-3">
+          <Button 
+            onClick={() => setIsAddModalOpen(true)} 
+            variant="outline" 
+            className="flex-1 h-12 rounded-xl gap-2 text-sm font-medium"
+          >
+            <Plus className="h-5 w-5" />
+            {t('add') || 'Add'}
+          </Button>
+          <Button
+            onClick={handleDispatchNext}
+            disabled={!nextDispatchableTaxi || isLoading}
+            className="flex-1 h-12 rounded-xl gap-2 text-sm font-medium shadow-lg shadow-primary/25"
+          >
+            <Send className="h-5 w-5" />
+            {t('dispatch') || 'Dispatch'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Add to Queue Modal */}
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="sm:max-w-md mx-4 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl">{t('addTaxiToQueue') || 'Add Taxi to Your Queue'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-5 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="plate" className="text-sm font-medium">{t('plateNumber') || 'Plate Number'}</Label>
+              <Input
+                id="plate"
+                placeholder="TX-1234"
+                value={plateNumber}
+                onChange={(e) => setPlateNumber(e.target.value)}
+                autoFocus
+                className="modern-input"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="driver" className="text-sm font-medium">{t('driverName') || 'Driver Name'}</Label>
+              <Input
+                id="driver"
+                placeholder={t('fullName') || 'Full name'}
+                value={driverName}
+                onChange={(e) => setDriverName(e.target.value)}
+                className="modern-input"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-3 sm:gap-2">
+            <Button variant="outline" onClick={() => setIsAddModalOpen(false)} className="flex-1 sm:flex-none h-11 rounded-xl">
+              {t('cancel') || 'Cancel'}
+            </Button>
+            <Button onClick={handleAddToQueue} disabled={isLoading} className="flex-1 sm:flex-none h-11 rounded-xl">
+              {isLoading ? t('adding') || 'Adding...' : t('addToQueue') || 'Add to Queue'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 };
 export default DispatcherDashboard;

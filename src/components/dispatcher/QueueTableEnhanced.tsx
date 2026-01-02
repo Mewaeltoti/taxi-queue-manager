@@ -93,16 +93,18 @@ export function QueueTableEnhanced({
   };
 
   return (
-    <div className="bg-card rounded-xl border overflow-hidden">
+    <div className="premium-card overflow-hidden">
       {/* Mobile View */}
-      <div className="lg:hidden space-y-0">
+      <div className="lg:hidden">
         {activeEntries.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">
-            <Car className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>{t('noTaxisInQueue') || 'No taxis in queue'}</p>
+          <div className="p-10 text-center animate-fade-in">
+            <div className="h-16 w-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+              <Car className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground font-medium">{t('noTaxisInQueue') || 'No taxis in queue'}</p>
           </div>
         ) : (
-          <div className="divide-y">
+          <div className="divide-y divide-border/50">
             {activeEntries.map((entry, index) => (
               <div
                 key={entry.id}
@@ -113,8 +115,11 @@ export function QueueTableEnhanced({
                   }
                 }}
                 className={cn(
-                  'p-4 transition-colors animate-slide-up cursor-pointer',
-                  isNextInQueue(entry, index) ? 'queue-row-next animate-pulse' : statusColors[entry.status]
+                  'p-4 transition-all duration-200 touch-target animate-slide-up',
+                  isNextInQueue(entry, index) 
+                    ? 'queue-row-next bg-gradient-to-r from-primary/10 to-primary/5' 
+                    : statusColors[entry.status],
+                  !readOnly && 'active:bg-muted/50'
                 )}
                 style={{ animationDelay: `${index * 50}ms` }}
               >
@@ -122,57 +127,58 @@ export function QueueTableEnhanced({
                   <div className="flex items-center gap-3">
                     <div
                       className={cn(
-                        'h-10 w-10 rounded-lg flex items-center justify-center font-bold',
-                        isNextInQueue(entry, index) ? 'bg-accent text-accent-foreground' : 'bg-secondary'
+                        'h-12 w-12 rounded-xl flex items-center justify-center font-bold text-lg shadow-sm',
+                        isNextInQueue(entry, index) 
+                          ? 'bg-gradient-to-br from-accent to-accent/80 text-accent-foreground shadow-accent/30' 
+                          : 'bg-secondary'
                       )}
                     >
                       {entry.queue_number}
                     </div>
-                    <div>
-                      <p className="font-semibold">{entry.plate_number || '—'}</p>
-                      <p className="text-sm text-muted-foreground">{entry.driver_name || 'Unknown Driver'}</p>
+                    <div className="min-w-0">
+                      <p className="font-bold text-base truncate">{entry.plate_number || '—'}</p>
+                      <p className="text-sm text-muted-foreground truncate">{entry.driver_name || 'Unknown Driver'}</p>
                     </div>
                   </div>
                   {!readOnly && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button size="sm" variant="ghost" className="h-8">
+                        <Button size="sm" variant="ghost" className="h-10 w-10 rounded-xl">
                           •••
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="w-48 rounded-xl">
                         {entry.status !== 'not_ready' && (
-                          <DropdownMenuItem onClick={() => onStatusChange?.(entry.id, 'not_ready')}>
-                            <AlertTriangle className="h-4 w-4 mr-2" />
+                          <DropdownMenuItem onClick={() => onStatusChange?.(entry.id, 'not_ready')} className="gap-2 py-3">
+                            <AlertTriangle className="h-4 w-4 text-warning" />
                             {t('markNotReady') || 'Mark Not Ready'}
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => onStatusChange?.(entry.id, 'returned')}>
-                          <RotateCcw className="h-4 w-4 mr-2" />
+                        <DropdownMenuItem onClick={() => onStatusChange?.(entry.id, 'returned')} className="gap-2 py-3">
+                          <RotateCcw className="h-4 w-4 text-primary" />
                           {t('markReturned') || 'Mark Returned'}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => onStatusChange?.(entry.id, 'canceled')}
-                          className="text-destructive"
+                          className="text-destructive gap-2 py-3"
                         >
-                          <X className="h-4 w-4 mr-2" />
+                          <X className="h-4 w-4" />
                           {t('removeFromQueue') || 'Remove from Queue'}
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleOpenReport(entry)}>
-                          <Flag className="h-4 w-4 mr-2" />
+                        <DropdownMenuItem onClick={() => handleOpenReport(entry)} className="gap-2 py-3">
+                          <Flag className="h-4 w-4 text-muted-foreground" />
                           {t('reportTaxi') || 'Report Taxi'}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>{formatTime(entry.arrival_time)}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Hash className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-sm">
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Clock className="h-3.5 w-3.5" />
+                      <span>{formatTime(entry.arrival_time)}</span>
+                    </div>
                     <span className={cn(
                       'font-medium',
                       isNextInQueue(entry, index) ? 'text-accent' : 'text-muted-foreground'
@@ -180,11 +186,10 @@ export function QueueTableEnhanced({
                       {formatDuration(entry.arrival_time)}
                     </span>
                   </div>
-                </div>
-                <div className="mt-3">
                   <Badge 
                     variant={statusBadgeVariants[entry.status]} 
                     className={cn(
+                      'text-xs',
                       entry.status === 'waiting' && isNextInQueue(entry, index) && 'animate-pulse-subtle bg-accent text-accent-foreground'
                     )}
                   >
@@ -201,22 +206,24 @@ export function QueueTableEnhanced({
       <div className="hidden lg:block overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b bg-muted/50">
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">#</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('plateNumber') || 'Plate'}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('driver') || 'Driver'}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('arrivalTime') || 'Arrival'}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('waitingTime') || 'Waiting'}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('status') || 'Status'}</th>
-              {!readOnly && <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('actions') || 'Actions'}</th>}
+            <tr className="border-b bg-muted/30">
+              <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">#</th>
+              <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('plateNumber') || 'Plate'}</th>
+              <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('driver') || 'Driver'}</th>
+              <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('arrivalTime') || 'Arrival'}</th>
+              <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('waitingTime') || 'Waiting'}</th>
+              <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('status') || 'Status'}</th>
+              {!readOnly && <th className="px-4 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('actions') || 'Actions'}</th>}
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y divide-border/50">
             {activeEntries.length === 0 ? (
               <tr>
-                <td colSpan={!readOnly ? 7 : 6} className="px-4 py-12 text-center text-muted-foreground">
-                  <Car className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>{t('noTaxisInQueue') || 'No taxis in queue'}</p>
+                <td colSpan={!readOnly ? 7 : 6} className="px-4 py-16 text-center text-muted-foreground">
+                  <div className="h-16 w-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                    <Car className="h-8 w-8 text-muted-foreground/50" />
+                  </div>
+                  <p className="font-medium">{t('noTaxisInQueue') || 'No taxis in queue'}</p>
                 </td>
               </tr>
             ) : (
@@ -224,80 +231,89 @@ export function QueueTableEnhanced({
                 <tr
                   key={entry.id}
                   className={cn(
-                    'transition-colors animate-slide-up',
-                    isNextInQueue(entry, index) ? 'queue-row-next hover:bg-accent/10' : `${statusColors[entry.status]} hover:bg-muted/50`
+                    'transition-all duration-200 animate-slide-up',
+                    isNextInQueue(entry, index) 
+                      ? 'queue-row-next bg-gradient-to-r from-primary/10 to-transparent hover:from-primary/15' 
+                      : `${statusColors[entry.status]} hover:bg-muted/30`
                   )}
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <td className="px-4 py-4">
                     <div
                       className={cn(
-                        'h-9 w-9 rounded-lg flex items-center justify-center font-bold text-sm',
-                        isNextInQueue(entry, index) ? 'bg-accent text-accent-foreground' : 'bg-secondary'
+                        'h-10 w-10 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm',
+                        isNextInQueue(entry, index) 
+                          ? 'bg-gradient-to-br from-accent to-accent/80 text-accent-foreground shadow-accent/20' 
+                          : 'bg-secondary'
                       )}
                     >
                       {entry.queue_number}
                     </div>
                   </td>
-                  <td className="px-4 py-4 font-semibold">{entry.plate_number || '—'}</td>
-                  <td className="px-4 py-4">{entry.driver_name || 'Unknown Driver'}</td>
+                  <td className="px-4 py-4 font-bold text-base">{entry.plate_number || '—'}</td>
+                  <td className="px-4 py-4 text-muted-foreground">{entry.driver_name || 'Unknown Driver'}</td>
                   <td className="px-4 py-4 text-muted-foreground">{formatTime(entry.arrival_time)}</td>
                   <td className="px-4 py-4">
                     <span className={cn(
-                      'font-medium',
+                      'font-semibold',
                       isNextInQueue(entry, index) ? 'text-accent' : 'text-muted-foreground'
                     )}>
                       {formatDuration(entry.arrival_time)}
                     </span>
                   </td>
                   <td className="px-4 py-4">
-                    <Badge variant={statusBadgeVariants[entry.status]}>
+                    <Badge 
+                      variant={statusBadgeVariants[entry.status]}
+                      className={cn(
+                        isNextInQueue(entry, index) && 'bg-accent text-accent-foreground'
+                      )}
+                    >
                       {t(entry.status) || entry.status}
                     </Badge>
                   </td>
                   {!readOnly && (
                     <td className="px-4 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-2">
                         {entry.status === 'not_ready' && (
                           <Button 
                             size="sm" 
                             variant="outline" 
-                            className="h-8 text-xs border-success text-success hover:bg-success/10"
+                            className="h-9 text-xs rounded-lg border-success text-success hover:bg-success/10"
                             onClick={(e) => {
                               e.stopPropagation();
                               onStatusChange?.(entry.id, 'waiting');
                             }}
                           >
-                            <CheckCircle className="h-3 w-3 mr-1" />
+                            <CheckCircle className="h-3.5 w-3.5 mr-1" />
                             {t('readyNow') || 'Ready'}
                           </Button>
                         )}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button size="sm" variant="ghost" className="h-8">
+                            <Button size="sm" variant="ghost" className="h-9 w-9 rounded-lg">
                               •••
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" className="w-44 rounded-xl">
                             {entry.status !== 'not_ready' && (
-                              <DropdownMenuItem onClick={() => onStatusChange?.(entry.id, 'not_ready')}>
-                                <AlertTriangle className="h-4 w-4 mr-2" />
+                              <DropdownMenuItem onClick={() => onStatusChange?.(entry.id, 'not_ready')} className="gap-2 py-2.5">
+                                <AlertTriangle className="h-4 w-4 text-warning" />
                                 {t('markNotReady') || 'Not Ready'}
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem onClick={() => onStatusChange?.(entry.id, 'returned')}>
-                              <RotateCcw className="h-4 w-4 mr-2" />
+                            <DropdownMenuItem onClick={() => onStatusChange?.(entry.id, 'returned')} className="gap-2 py-2.5">
+                              <RotateCcw className="h-4 w-4 text-primary" />
                               {t('markReturned') || 'Returned'}
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => onStatusChange?.(entry.id, 'canceled')}
-                              className="text-destructive"
+                              className="text-destructive gap-2 py-2.5"
                             >
-                              <X className="h-4 w-4 mr-2" />
+                              <X className="h-4 w-4" />
                               {t('removeFromQueue') || 'Cancel'}
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleOpenReport(entry)}>
-                              <Flag className="h-4 w-4 mr-2" />
+                            <DropdownMenuItem onClick={() => handleOpenReport(entry)} className="gap-2 py-2.5">
+                              <Flag className="h-4 w-4 text-muted-foreground" />
                               {t('reportTaxi') || 'Report'}
                             </DropdownMenuItem>
                           </DropdownMenuContent>

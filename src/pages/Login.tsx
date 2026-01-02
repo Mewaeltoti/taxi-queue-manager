@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Car, Mail, Lock, Loader2 } from 'lucide-react';
+import { Car, Mail, Lock, Loader2, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,46 +22,53 @@ export default function Login() {
 
     if (success) {
       toast.success(t('loginSuccess') || 'Welcome back!');
-      // Navigation happens automatically via HomeRedirect
     } else {
       toast.error(t('invalidCredentials') || 'Invalid email or password');
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen page-container flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-bl from-primary/10 via-transparent to-transparent rounded-full blur-3xl" />
+        <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-accent/10 via-transparent to-transparent rounded-full blur-3xl" />
+      </div>
+
+      <div className="w-full max-w-md relative z-10 animate-fade-in">
         {/* Language Switch */}
-        <div className="text-right mb-4">
+        <div className="flex justify-end mb-6">
           <Button
             size="sm"
             variant="outline"
             onClick={() => setLang(lang === 'en' ? 'ti' : 'en')}
+            className="gap-2 rounded-full px-4 h-10 bg-card/80 backdrop-blur-sm border-border/50 hover:border-primary/50 transition-all"
           >
+            <Globe className="h-4 w-4" />
             {lang === 'en' ? 'ትግርኛ' : 'English'}
           </Button>
         </div>
 
         {/* Branding */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-primary mb-4">
-            <Car className="h-8 w-8 text-primary-foreground" />
+        <div className="text-center mb-8 animate-slide-up" style={{ animationDelay: '100ms' }}>
+          <div className="inline-flex items-center justify-center h-20 w-20 rounded-2xl bg-gradient-to-br from-primary to-primary/80 mb-5 shadow-xl shadow-primary/30 animate-bounce-subtle">
+            <Car className="h-10 w-10 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold">{t('appName')}</h1>
-          <p className="text-muted-foreground mt-1">{t('queueManagement')}</p>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{t('appName')}</h1>
+          <p className="text-muted-foreground mt-2 text-base">{t('queueManagement')}</p>
         </div>
 
         {/* Login Form */}
-        <div className="bg-card rounded-2xl border shadow-lg p-6 sm:p-8">
-          <div className="text-center mb-6">
-            <h2 className="text-xl font-semibold">{t('loginTitle')}</h2>
-            <p className="text-sm text-muted-foreground mt-1">{t('loginSubtitle')}</p>
+        <div className="glass-card p-6 sm:p-8 animate-scale-in" style={{ animationDelay: '200ms' }}>
+          <div className="text-center mb-8">
+            <h2 className="text-xl sm:text-2xl font-semibold">{t('loginTitle')}</h2>
+            <p className="text-sm text-muted-foreground mt-2">{t('loginSubtitle')}</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
+              <Label htmlFor="email" className="flex items-center gap-2 text-sm font-medium">
+                <Mail className="h-4 w-4 text-primary" />
                 {t('email')}
               </Label>
               <Input
@@ -71,12 +78,13 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="modern-input"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="flex items-center gap-2">
-                <Lock className="h-4 w-4" />
+              <Label htmlFor="password" className="flex items-center gap-2 text-sm font-medium">
+                <Lock className="h-4 w-4 text-primary" />
                 {t('password')}
               </Label>
               <Input
@@ -85,13 +93,18 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="modern-input"
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              className="w-full h-12 text-base font-semibold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all active:scale-[0.98]" 
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                   {t('loading')}
                 </>
               ) : (
@@ -100,6 +113,11 @@ export default function Login() {
             </Button>
           </form>
         </div>
+
+        {/* Footer */}
+        <p className="text-center text-xs text-muted-foreground mt-6 animate-fade-in" style={{ animationDelay: '400ms' }}>
+          © 2024 Taxi Queue Management System
+        </p>
       </div>
     </div>
   );
