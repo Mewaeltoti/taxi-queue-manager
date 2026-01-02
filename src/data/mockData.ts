@@ -3,10 +3,10 @@ import { Driver, Fermata, QueueEntry, DispatchLog, DailyStats, User, Taxi } from
 // Dispatchers - each has exactly ONE assigned fermata
 export const mockUsers: User[] = [
   { id: '1', email: 'admin@taxi.com', name: 'ኣብርሃም ገብረ', role: 'admin' },
-  { id: '2', email: 'dispatcher@taxi.com', name: 'ሳራ ተወልደ', role: 'dispatcher', assignedFermatas: ['1'] },
-  { id: '3', email: 'dispatcher2@taxi.com', name: 'ዳዊት ሃይለ', role: 'dispatcher', assignedFermatas: ['2'] },
-  { id: '4', email: 'dispatcher3@taxi.com', name: 'ሃና ተስፋይ', role: 'dispatcher', assignedFermatas: ['3'] },
-  { id: '5', email: 'dispatcher4@taxi.com', name: 'ዮሃንስ ኪዳነ', role: 'dispatcher', assignedFermatas: ['4'] },
+  { id: '2', email: 'dispatcher@taxi.com', name: 'ሳራ ተወልደ', role: 'dispatcher', assigned_fermata_ids: ['1'] },
+  { id: '3', email: 'dispatcher2@taxi.com', name: 'ዳዊት ሃይለ', role: 'dispatcher', assigned_fermata_ids: ['2'] },
+  { id: '4', email: 'dispatcher3@taxi.com', name: 'ሃና ተስፋይ', role: 'dispatcher', assigned_fermata_ids: ['3'] },
+  { id: '5', email: 'dispatcher4@taxi.com', name: 'ዮሃንስ ኪዳነ', role: 'dispatcher', assigned_fermata_ids: ['4'] },
 ];
 
 // Drivers with license info
@@ -23,14 +23,14 @@ export const mockDrivers: Driver[] = [
 
 // Taxis linked to drivers (one-to-one relationship)
 export const mockTaxis: Taxi[] = [
-  { id: '1', plateNumber: 'TX-1234', type: 'sedan', driverId: '1' },
-  { id: '2', plateNumber: 'TX-5678', type: 'suv', driverId: '2' },
-  { id: '3', plateNumber: 'TX-9012', type: 'van', driverId: '3' },
-  { id: '4', plateNumber: 'TX-3456', type: 'minibus', driverId: '4' },
-  { id: '5', plateNumber: 'TX-7890', type: 'sedan', driverId: '5' },
-  { id: '6', plateNumber: 'TX-2468', type: 'sedan', driverId: '6' },
-  { id: '7', plateNumber: 'TX-1357', type: 'suv', driverId: '7' },
-  { id: '8', plateNumber: 'TX-8024', type: 'van', driverId: '8' },
+  { id: '1', plate_number: 'TX-1234', type: 'sedan', driver_id: '1' },
+  { id: '2', plate_number: 'TX-5678', type: 'suv', driver_id: '2' },
+  { id: '3', plate_number: 'TX-9012', type: 'van', driver_id: '3' },
+  { id: '4', plate_number: 'TX-3456', type: 'minibus', driver_id: '4' },
+  { id: '5', plate_number: 'TX-7890', type: 'sedan', driver_id: '5' },
+  { id: '6', plate_number: 'TX-2468', type: 'sedan', driver_id: '6' },
+  { id: '7', plate_number: 'TX-1357', type: 'suv', driver_id: '7' },
+  { id: '8', plate_number: 'TX-8024', type: 'van', driver_id: '8' },
 ];
 
 export const mockFermatas: Fermata[] = [
