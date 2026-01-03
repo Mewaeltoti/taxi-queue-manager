@@ -1,8 +1,8 @@
-import { LogOut, Menu, Bell, Globe, Sun, Moon } from 'lucide-react';
+import { LogOut, Menu, Globe, Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useState, useEffect } from 'react';
+import { NotificationToggle } from '@/components/NotificationToggle';
 
 interface HeaderProps {
   associationName: string;
@@ -74,13 +74,8 @@ export function Header({
       </div>
 
       <div className="flex items-center gap-1 sm:gap-2">
-        {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative h-9 w-9 sm:h-10 sm:w-10">
-          <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-          <Badge className="absolute -top-0.5 -right-0.5 h-4 w-4 sm:h-5 sm:w-5 p-0 flex items-center justify-center text-[10px] bg-accent border-2 border-card">
-            3
-          </Badge>
-        </Button>
+        {/* Push Notification Toggle */}
+        <NotificationToggle />
 
         {/* Dispatcher info - hidden on small screens */}
         <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-secondary/50 border border-border/50">
