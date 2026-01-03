@@ -215,40 +215,50 @@ const [selectedTaxi, setSelectedTaxi] = useState<string>('');
   if (!user) return null;
   return (
     <div className="min-h-screen page-container">
-      <main className="content-container pb-24 sm:pb-6">
-        {/* Assigned Destination */}
-        <div className="mb-5 animate-fade-in">
-          <p className="text-xs sm:text-sm text-muted-foreground mb-2 font-medium">{t('yourDestination') || 'Your Assigned Destination'}:</p>
-          <div className="flex flex-wrap gap-2">
+      <main className="content-container pb-28 sm:pb-6">
+        {/* Assigned Destination - Mobile Optimized */}
+        <div className="mb-4 sm:mb-5 animate-fade-in">
+          <p className="text-[11px] sm:text-sm text-muted-foreground mb-1.5 sm:mb-2 font-medium uppercase tracking-wide">{t('yourDestination') || 'Your Destination'}</p>
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {assignedFermatas.map(f => (
-              <Badge key={f.id} variant="secondary" className="px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium bg-primary/10 text-primary border border-primary/20">
+              <Badge 
+                key={f.id} 
+                variant="secondary" 
+                className="px-2.5 sm:px-4 py-1 sm:py-1.5 text-[11px] sm:text-sm font-semibold bg-primary/10 text-primary border border-primary/20 rounded-lg"
+              >
                 {f.code} - {f.name}
               </Badge>
             ))}
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 animate-slide-up">
-          <div className="stat-card group">
-            <div className="stat-card-icon bg-accent/10 mb-3">
-              <Car className="h-6 w-6 text-accent" />
+        {/* Stats - Mobile First Grid */}
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 mb-5 sm:mb-6 animate-slide-up">
+          <div className="stat-card group p-4 sm:p-6">
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
+              <div className="stat-card-icon bg-accent/10 h-10 w-10 sm:h-12 sm:w-12">
+                <Car className="h-5 w-5 sm:h-6 sm:w-6 text-accent" />
+              </div>
+              <span className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider">{t('queue') || 'Queue'}</span>
             </div>
-            <p className="text-3xl sm:text-4xl font-bold text-foreground">{waitingCount}</p>
-            <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-1">{t('inQueue') || 'In Your Queue'}</p>
+            <p className="text-2xl sm:text-4xl font-bold text-foreground leading-none">{waitingCount}</p>
+            <p className="text-[10px] sm:text-sm text-muted-foreground font-medium mt-1">{t('inQueue') || 'In Queue'}</p>
           </div>
-          <div className="stat-card group">
-            <div className="stat-card-icon bg-success/10 mb-3">
-              <Send className="h-6 w-6 text-success" />
+          <div className="stat-card group p-4 sm:p-6">
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
+              <div className="stat-card-icon bg-success/10 h-10 w-10 sm:h-12 sm:w-12">
+                <Send className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
+              </div>
+              <span className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider">{t('today') || 'Today'}</span>
             </div>
-            <p className="text-3xl sm:text-4xl font-bold text-foreground">{dispatchedToday}</p>
-            <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-1">{t('dispatchedToday') || 'Dispatched Today'}</p>
+            <p className="text-2xl sm:text-4xl font-bold text-foreground leading-none">{dispatchedToday}</p>
+            <p className="text-[10px] sm:text-sm text-muted-foreground font-medium mt-1">{t('dispatched') || 'Dispatched'}</p>
           </div>
         </div>
 
-        {/* Action Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 animate-slide-up" style={{ animationDelay: '100ms' }}>
-          <h2 className="section-title">{t('yourQueue') || 'Your Taxi Queue'}</h2>
+        {/* Action Bar - Mobile Optimized */}
+        <div className="flex items-center justify-between gap-3 mb-4 sm:mb-5 animate-slide-up" style={{ animationDelay: '100ms' }}>
+          <h2 className="text-lg sm:text-2xl font-bold tracking-tight">{t('yourQueue') || 'Taxi Queue'}</h2>
           <div className="hidden sm:flex gap-3">
             <Button onClick={() => setIsAddModalOpen(true)} variant="outline" className="rounded-xl h-11 gap-2">
               <Plus className="h-4 w-4" />
@@ -275,39 +285,69 @@ const [selectedTaxi, setSelectedTaxi] = useState<string>('');
           />
         </div>
 
-        {/* Today's Log */}
+        {/* Today's Log - Mobile Optimized */}
         {dispatchLogs.length > 0 && (
-          <div className="mt-8 animate-fade-in" style={{ animationDelay: '200ms' }}>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                {t('yourDispatchesToday') || "Your Dispatches Today"}
+          <div className="mt-6 sm:mt-8 animate-fade-in" style={{ animationDelay: '200ms' }}>
+            <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
+              <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <span className="truncate">{t('yourDispatchesToday') || "Today's Dispatches"}</span>
+                <Badge variant="secondary" className="text-[10px] sm:text-xs">{dispatchLogs.length}</Badge>
               </h3>
-              <Button onClick={exportTodaysLogToCSV} variant="outline" size="sm" className="rounded-xl gap-2 w-full sm:w-auto">
-                <Download className="h-4 w-4" />
-                {t('exportCSV') || 'Export CSV'}
+              <Button onClick={exportTodaysLogToCSV} variant="ghost" size="sm" className="rounded-lg gap-1.5 text-xs h-8 px-2 sm:px-3 shrink-0">
+                <Download className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t('exportCSV') || 'Export'}</span>
               </Button>
             </div>
-            <div className="premium-card overflow-hidden">
+            
+            {/* Mobile Card View */}
+            <div className="sm:hidden space-y-2">
+              {dispatchLogs.slice(0, 8).map((log, i) => (
+                <div 
+                  key={log.id} 
+                  className="bg-card rounded-xl border p-3 flex items-center justify-between gap-3 animate-fade-in"
+                  style={{ animationDelay: `${i * 40}ms` }}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-9 w-9 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
+                      <Send className="h-4 w-4 text-success" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate">{log.queue_entry?.plate_number}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{log.queue_entry?.driver_name}</p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <Badge variant="secondary" className="text-[10px] mb-0.5">{log.fermata?.code}</Badge>
+                    <p className="text-[11px] text-muted-foreground">
+                      {new Date(log.dispatched_at).toLocaleTimeString('am-ET', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden sm:block premium-card overflow-hidden">
               <div className="overflow-x-auto scrollbar-hide">
                 <table className="w-full">
                   <thead className="bg-muted/50 border-b">
                     <tr>
-                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('plate') || 'Plate'}</th>
-                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden sm:table-cell">{t('driver') || 'Driver'}</th>
-                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('destination') || 'Dest.'}</th>
-                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('time') || 'Time'}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('plate') || 'Plate'}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('driver') || 'Driver'}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('destination') || 'Dest.'}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('time') || 'Time'}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/50">
                     {dispatchLogs.slice(0, 10).map((log, i) => (
                       <tr key={log.id} className="hover:bg-muted/30 transition-colors animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
-                        <td className="px-3 sm:px-4 py-3 font-semibold text-sm">{log.queue_entry?.plate_number}</td>
-                        <td className="px-3 sm:px-4 py-3 text-sm hidden sm:table-cell">{log.queue_entry?.driver_name}</td>
-                        <td className="px-3 sm:px-4 py-3 text-sm">
+                        <td className="px-4 py-3 font-semibold text-sm">{log.queue_entry?.plate_number}</td>
+                        <td className="px-4 py-3 text-sm">{log.queue_entry?.driver_name}</td>
+                        <td className="px-4 py-3 text-sm">
                           <Badge variant="secondary" className="text-xs">{log.fermata?.code}</Badge>
                         </td>
-                        <td className="px-3 sm:px-4 py-3 text-sm text-muted-foreground">
+                        <td className="px-4 py-3 text-sm text-muted-foreground">
                           {new Date(log.dispatched_at).toLocaleTimeString('am-ET', { hour: '2-digit', minute: '2-digit' })}
                         </td>
                       </tr>
@@ -320,24 +360,29 @@ const [selectedTaxi, setSelectedTaxi] = useState<string>('');
         )}
       </main>
 
-      {/* Mobile Bottom Action Bar */}
-      <div className="mobile-bottom-nav sm:hidden">
-        <div className="flex gap-3">
+      {/* Mobile Bottom Action Bar - Enhanced */}
+      <div className="mobile-bottom-nav sm:hidden z-50">
+        <div className="flex gap-2.5">
           <Button 
             onClick={() => setIsAddModalOpen(true)} 
             variant="outline" 
-            className="flex-1 h-12 rounded-xl gap-2 text-sm font-medium"
+            className="flex-1 h-[52px] rounded-xl gap-2 text-sm font-semibold border-2 active:scale-[0.98] transition-transform"
           >
             <Plus className="h-5 w-5" />
-            {t('add') || 'Add'}
+            <span>{t('add') || 'Add'}</span>
           </Button>
           <Button
             onClick={handleDispatchNext}
             disabled={!nextDispatchableTaxi || isLoading}
-            className="flex-1 h-12 rounded-xl gap-2 text-sm font-medium shadow-lg shadow-primary/25"
+            className="flex-[1.5] h-[52px] rounded-xl gap-2 text-sm font-semibold shadow-lg shadow-primary/30 active:scale-[0.98] transition-transform disabled:shadow-none"
           >
             <Send className="h-5 w-5" />
-            {t('dispatch') || 'Dispatch'}
+            <span>{t('dispatch') || 'Dispatch'}</span>
+            {nextDispatchableTaxi && (
+              <Badge className="ml-1 bg-primary-foreground/20 text-primary-foreground text-[10px] px-1.5">
+                #{nextDispatchableTaxi.queue_number}
+              </Badge>
+            )}
           </Button>
         </div>
       </div>

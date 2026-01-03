@@ -1,7 +1,8 @@
-import { LogOut, Menu, Bell, Globe } from 'lucide-react';
+import { LogOut, Menu, Bell, Globe, Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useState, useEffect } from 'react';
 
 interface HeaderProps {
   associationName: string;
@@ -18,8 +19,38 @@ export function Header({
   onMenuClick,
   showMenu = false 
 }: HeaderProps) {
-
   const { lang, setLang, t } = useLanguage();
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+      setIsDark(true);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    document.documentElement.classList.add('theme-transitioning');
+    
+    if (isDark) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    }
+    setIsDark(!isDark);
+
+    setTimeout(() => {
+      document.documentElement.classList.remove('theme-transitioning');
+    }, 400);
+  };
 
   return (
     <header className="h-14 sm:h-16 border-b bg-card/95 backdrop-blur-lg px-3 sm:px-6 flex items-center justify-between sticky top-0 z-40 shadow-sm">
@@ -60,6 +91,18 @@ export function Header({
           </div>
           <span className="text-sm font-medium">{dispatcherName}</span>
         </div>
+
+        {/* Dark mode toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          className="h-9 w-9 sm:h-10 sm:w-10 relative overflow-hidden"
+          title={isDark ? 'Light mode' : 'Dark mode'}
+        >
+          <Sun className={`h-4 w-4 sm:h-5 sm:w-5 absolute transition-all duration-300 ${isDark ? 'rotate-90 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'}`} />
+          <Moon className={`h-4 w-4 sm:h-5 sm:w-5 absolute transition-all duration-300 ${isDark ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'}`} />
+        </Button>
 
         {/* Language switch */}
         <Button
