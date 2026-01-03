@@ -18,6 +18,7 @@ import AuditLogs from "./pages/admin/AuditLogs";
 import NotFound from "./pages/NotFound";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { MainLayout } from "./components/layout/MainLayout";
+import { OfflineIndicator } from "./components/OfflineIndicator";
 
 const queryClient = new QueryClient();
 
@@ -181,6 +182,7 @@ function AppRoutes() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <OfflineIndicator />
       <Toaster />
       <Sonner />
       <BrowserRouter>
