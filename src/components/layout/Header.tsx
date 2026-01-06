@@ -2,7 +2,6 @@ import { LogOut, Menu, Globe, Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useState, useEffect } from 'react';
-import { NotificationToggle } from '@/components/NotificationToggle';
 
 interface HeaderProps {
   associationName: string;
@@ -74,9 +73,6 @@ export function Header({
       </div>
 
       <div className="flex items-center gap-1 sm:gap-2">
-        {/* Push Notification Toggle */}
-        <NotificationToggle />
-
         {/* Dispatcher info - hidden on small screens */}
         <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-secondary/50 border border-border/50">
           <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center ring-2 ring-primary/20">
