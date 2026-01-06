@@ -16,6 +16,7 @@ import Dispatchers from "./pages/admin/Dispatchers";
 import ReportCenter from "./pages/admin/ReportCenter";
 import AuditLogs from "./pages/admin/AuditLogs";
 import NotFound from "./pages/NotFound";
+import Install from "./pages/Install";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { MainLayout } from "./components/layout/MainLayout";
 import { OfflineIndicator } from "./components/OfflineIndicator";
@@ -76,6 +77,7 @@ function AppRoutes() {
     <Routes>
       {/* Public routes */}
       <Route path="/login" element={<AuthRoute><Login /></AuthRoute>} />
+      <Route path="/install" element={<Install />} />
       <Route path="/" element={<HomeRedirect />} />
 
       {/* All protected routes wrapped in MainLayout (fixed header) */}
