@@ -1,10 +1,10 @@
 // src/components/layout/MainLayout.tsx
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { Header } from './Header';
 import { useAuth } from '@/contexts/AuthContext';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { InstallBanner } from '@/components/InstallBanner';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -34,9 +34,12 @@ const { t } = useLanguage();
       </div>
 
       {/* Main content with top padding to avoid overlap */}
-      <main className="flex-1 pt-16"> {/* pt-16 = height of header (adjust if needed) */}
-      <Outlet />
+      <main className="flex-1 pt-16 pb-14 md:pb-0"> {/* pb-14 for install banner on mobile */}
+        <Outlet />
       </main>
+
+      {/* Install banner for mobile users */}
+      <InstallBanner />
     </div>
   );
 }
