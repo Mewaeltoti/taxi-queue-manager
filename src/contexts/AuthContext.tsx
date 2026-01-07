@@ -68,40 +68,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
+const login = async (email: string, password: string): Promise<boolean> => {
+  setIsLoading(true);
 
-    // Get user profile (without password)
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('id, email, name, role, assigned_fermata_ids')
-      .eq('email', email.trim())
-      .single();
+  try {
+    const response = await fetch('https://jbryrzuskgbfzvynbwpn.supabase.co/functions/v1/smooth-processor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
 
-    if (userError || !userData) {
-      toast.error(t('invalidCredentials') || 'Invalid email or password');
-      setIsLoading(false);
+    const result = await response.json();
+
+    if (result.success && result.user) {
+      setUser(result.user);
+      return true;
+    } else {
+      toast.error('Invalid email or password');
       return false;
     }
-
-    // Get password separately
-    const { data: pwdData, error: pwdError } = await supabase
-      .from('users')
-      .select('password')
-      .eq('id', userData.id)
-      .single();
-
-    if (pwdError || !pwdData?.password || pwdData.password !== password) {
-      toast.error(t('invalidCredentials') || 'Invalid email or password');
-      setIsLoading(false);
-      return false;
-    }
-
-    // Success — set user
-    setUser(userData);
+  } catch (err) {
+    toast.error('Login failed');
+    console.error(err);
+    return false;
+  } finally {
     setIsLoading(false);
-    return true;
-  };
+  }
+};
 
   const logout = async () => {
     await supabase.auth.signOut();
