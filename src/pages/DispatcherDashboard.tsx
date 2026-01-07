@@ -88,41 +88,61 @@ const DispatcherDashboard = () => {
   const dispatchedToday = dispatchLogs.length;
 
   const handleAddToQueue = async () => {
-    if (!plateNumber.trim() || !driverName.trim()) {
-      toast.error('Please enter plate and driver name');
-      return;
-    }
+  if (!plateNumber.trim() || !driverName.trim()) {
+    toast.error('Please enter plate and driver name');
+    return;
+  }
 
-    if (!primaryFermata) {
-      toast.error('No destination assigned');
-      return;
-    }
+  if (!primaryFermata) {
+    toast.error('No destination assigned');
+    return;
+  }
 
-    const newQueueNumber = activeEntries.length + 1;
+  const normalizedPlate = plateNumber.trim().toUpperCase();
+  const newQueueNumber = activeEntries.length + 1;
 
-    const { error } = await supabase
-      .from('queue_entries')
-      .insert({
-        queue_number: newQueueNumber,
-        plate_number: plateNumber.trim().toUpperCase(),
-        driver_name: driverName.trim(),
-        arrival_time: new Date().toISOString(),
-        status: 'waiting',
-        fermata_id: primaryFermata.id,
-        dispatcher_id: user.id,
-        updated_at: new Date().toISOString(),
-      });
-
-    if (error) {
-      toast.error('Failed to add: ' + error.message);
-      console.error(error);
-    } else {
-      toast.success(`${plateNumber.toUpperCase()} added to queue!`);
-      setPlateNumber('');
-      setDriverName('');
-      setIsAddModalOpen(false);
-    }
+  // 1. Add to screen IMMEDIATELY (optimistic update)
+  const tempId = 'temp-' + Date.now();
+  const newEntry = {
+    id: tempId,
+    queue_number: newQueueNumber,
+    plate_number: normalizedPlate,
+    driver_name: driverName.trim(),
+    arrival_time: new Date().toISOString(),
+    status: 'waiting',
+    fermata_id: primaryFermata.id,
+    dispatcher_id: user.id,
   };
+
+  setQueueEntries(prev => [...prev, newEntry]);
+  toast.success(`${normalizedPlate} added!`);
+
+  setPlateNumber('');
+  setDriverName('');
+  setIsAddModalOpen(false);
+
+  // 2. Save to Supabase (fire and forget — real-time will sync)
+  const { error } = await supabase
+    .from('queue_entries')
+    .insert({
+      queue_number: newQueueNumber,
+      plate_number: normalizedPlate,
+      driver_name: driverName.trim(),
+      arrival_time: new Date().toISOString(),
+      status: 'waiting',
+      fermata_id: primaryFermata.id,
+      dispatcher_id: user.id,
+      updated_at: new Date().toISOString(),
+    });
+
+  if (error) {
+    toast.error('Sync failed — refresh to see');
+    console.error(error);
+    // Remove optimistic entry if failed
+    setQueueEntries(prev => prev.filter(e => e.id !== tempId));
+  }
+  // Real-time subscription will replace temp entry with real one
+};
 
   const handleDispatchNext = async () => {
     if (!nextDispatchableTaxi) {
