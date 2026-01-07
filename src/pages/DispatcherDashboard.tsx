@@ -149,8 +149,7 @@ const DispatcherDashboard = () => {
 .order('dispatched_at', { ascending: false });
       })
     ]);
-const filteredLogs = logsData?.filter(log => log.queue_entry?.dispatcher_id === user.id) || [];
-setDispatchLogs(filteredLogs);
+
     toast.success(`${nextDispatchableTaxi.plate_number} dispatched!`);
     setIsLoading(false);
   };
