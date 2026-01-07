@@ -145,12 +145,12 @@ const DispatcherDashboard = () => {
         .eq('id', nextDispatchableTaxi.id),
       supabase.from('dispatch_logs')
 .select('*, queue_entry(id, queue_number, plate_number, driver_name, arrival_time, status, dispatched_at), fermata:fermata_id(code, name)')
-.eq('dispatcher_id', user.id)  // ← Filter on main table
 .gte('dispatched_at', today + 'T00:00:00')
 .order('dispatched_at', { ascending: false });
       })
     ]);
-
+const filteredLogs = logsData?.filter(log => log.queue_entry?.dispatcher_id === user.id) || [];
+setDispatchLogs(filteredLogs);
     toast.success(`${nextDispatchableTaxi.plate_number} dispatched!`);
     setIsLoading(false);
   };
