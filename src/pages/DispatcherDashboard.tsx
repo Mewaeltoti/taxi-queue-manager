@@ -50,7 +50,7 @@ const [selectedTaxi, setSelectedTaxi] = useState<string>('');
       const { data: queueData } = await supabase
         .from('queue_entries')
         .select('*')
-        .eq('dispatcher_id', [user.id](http://user.id))  // ← Critical: only their taxis
+        .eq('dispatcher_id', user.id)  // ← Critical: only their taxis
         .order('queue_number', { ascending: true });
       setQueueEntries(queueData || []);
       // Load today's dispatch logs (only this dispatcher's)
@@ -58,7 +58,7 @@ const [selectedTaxi, setSelectedTaxi] = useState<string>('');
       const { data: logsData } = await supabase
         .from('dispatch_logs')
         .select('*, queue_entry(id, queue_number, plate_number, driver_name, arrival_time, status, dispatched_at), fermata:fermata_id(code, name)')
-        .eq('queue_entry.dispatcher_id', [user.id](http://user.id))  // ← Only their dispatches
+        .eq('queue_entry.dispatcher_id', user.id)  // ← Only their dispatches
         .gte('dispatched_at', today + 'T00:00:00')
         .order('dispatched_at', { ascending: false });
       setDispatchLogs(logsData || []);
@@ -75,7 +75,7 @@ const [selectedTaxi, setSelectedTaxi] = useState<string>('');
       void supabase.removeChannel(channel);
     };
   }, [user, navigate]);
-  const assignedFermatas = fermatas.filter(f => user?.assigned_fermata_ids?.includes([f.id](http://f.id)));
+  const assignedFermatas = fermatas.filter(f => user?.assigned_fermata_ids?.includes(f.id));
   const primaryFermata = assignedFermatas[0];
   const activeEntries = useMemo(() =>
     queueEntries.filter(e => ['waiting', 'not_ready', 'returned'].includes(e.status)),
@@ -102,8 +102,8 @@ const [selectedTaxi, setSelectedTaxi] = useState<string>('');
         driver_name: driverName.trim(),
         arrival_time: new Date().toISOString(),
         status: 'waiting',
-        fermata_id: [primaryFermata.id](http://primaryFermata.id),
-        dispatcher_id: [user.id](http://user.id),  // ← Always set to current user
+        fermata_id: primaryFermata.id,
+        dispatcher_id: user.id,  // ← Always set to current user
         updated_at: new Date().toISOString(),
       });
     if (error) {
@@ -118,7 +118,7 @@ const [selectedTaxi, setSelectedTaxi] = useState<string>('');
       const { data } = await supabase
         .from('queue_entries')
         .select('*')
-        .eq('dispatcher_id', [user.id](http://user.id))
+        .eq('dispatcher_id', user.id)
         .order('queue_number', { ascending: true });
       setQueueEntries(data || []);
     }
@@ -142,25 +142,25 @@ const [selectedTaxi, setSelectedTaxi] = useState<string>('');
         dispatched_at: dispatchedAt,
         updated_at: dispatchedAt,
       })
-      .eq('id', [nextDispatchableTaxi.id](http://nextDispatchableTaxi.id));
+      .eq('id', nextDispatchableTaxi.id);
     // Add to dispatch logs
     await supabase.from('dispatch_logs').insert({
-      queue_entry_id: [nextDispatchableTaxi.id](http://nextDispatchableTaxi.id),
-      fermata_id: [primaryFermata.id](http://primaryFermata.id),
+      queue_entry_id: nextDispatchableTaxi.id,
+      fermata_id: primaryFermata.id,
       dispatched_at: dispatchedAt,
     });
     // Refetch this dispatcher's data only
     const { data: queue } = await supabase
       .from('queue_entries')
       .select('*')
-      .eq('dispatcher_id', [user.id](http://user.id))
+      .eq('dispatcher_id', user.id)
       .order('queue_number', { ascending: true });
     setQueueEntries(queue || []);
     const today = new Date().toLocaleDateString('en-CA');
     const { data: logs } = await supabase
       .from('dispatch_logs')
       .select('*, queue_entry(id, queue_number, plate_number, driver_name, arrival_time, status, dispatched_at), fermata:fermata_id(code, name)')
-      .eq('queue_entry.dispatcher_id', [user.id](http://user.id))
+      .eq('queue_entry.dispatcher_id', user.id)
       .gte('dispatched_at', today + 'T00:00:00')
       .order('dispatched_at', { ascending: false });
     setDispatchLogs(logs || []);
@@ -183,7 +183,7 @@ const [selectedTaxi, setSelectedTaxi] = useState<string>('');
     const { data } = await supabase
       .from('queue_entries')
       .select('*')
-      .eq('dispatcher_id', [user.id](http://user.id))
+      .eq('dispatcher_id', user.id)
       .order('queue_number', { ascending: true });
  
     setQueueEntries(data || []);
@@ -196,67 +196,59 @@ const [selectedTaxi, setSelectedTaxi] = useState<string>('');
       return;
     }
     const headers = ['Plate', 'Driver', 'Destination', 'Time'];
-    const rows = [dispatchLogs.map](http://dispatchLogs.map)(log => [
+    const rows = dispatchLogs.map(log => [
       log.queue_entry?.plate_number || '',
       log.queue_entry?.driver_name || '',
-      log.fermata ? `${log.fermata.code} - ${[log.fermata.name](http://log.fermata.name)}` : '',
+      log.fermata ? `${log.fermata.code} - ${log.fermata.name}` : '',
       new Date(log.dispatched_at).toLocaleTimeString('am-ET', { hour: '2-digit', minute: '2-digit' }),
     ]);
-    const csv = [headers.join(','), ...[rows.map](http://rows.map)(r => `"${r.join('","')}"`)].join('\n');
+    const csv = [headers.join(','), ...rows.map(r => `"${r.join('","')}"`)].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    [a.download](http://a.download) = `my-dispatches-${new Date().toISOString().split('T')[0]}.csv`;
-    [a.click](http://a.click)();
+    a.download = `my-dispatches-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
     toast.success('CSV exported!');
   };
  
   if (!user) return null;
   return (
     <div className="min-h-screen page-container">
-      <main className="content-container pb-28 sm:pb-6">
-        {/* Assigned Destination - Mobile Optimized */}
-        <div className="mb-4 sm:mb-5 animate-fade-in">
-          <p className="text-[11px] sm:text-sm text-muted-foreground mb-1.5 sm:mb-2 font-medium uppercase tracking-wide">{t('yourDestination') || 'Your Destination'}</p>
-          <div className="flex flex-wrap gap-1.5 sm:gap-2">
-            {[assignedFermatas.map](http://assignedFermatas.map)(f => (
-              <Badge
-                key={[f.id](http://f.id)}
-                variant="secondary"
-                className="px-2.5 sm:px-4 py-1 sm:py-1.5 text-[11px] sm:text-sm font-semibold bg-primary/10 text-primary border border-primary/20 rounded-lg"
-              >
-                {f.code} - {[f.name](http://f.name)}
+      <main className="content-container pb-24 sm:pb-6">
+        {/* Assigned Destination */}
+        <div className="mb-5 animate-fade-in">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-2 font-medium">{t('yourDestination') || 'Your Assigned Destination'}:</p>
+          <div className="flex flex-wrap gap-2">
+            {assignedFermatas.map(f => (
+              <Badge key={f.id} variant="secondary" className="px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium bg-primary/10 text-primary border border-primary/20">
+                {f.code} - {f.name}
               </Badge>
             ))}
           </div>
         </div>
-        {/* Stats - Mobile First Grid */}
-        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 mb-5 sm:mb-6 animate-slide-up">
-          <div className="stat-card group p-4 sm:p-6">
-            <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="stat-card-icon bg-accent/10 h-10 w-10 sm:h-12 sm:w-12">
-                <Car className="h-5 w-5 sm:h-6 sm:w-6 text-accent" />
-              </div>
-              <span className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider">{t('queue') || 'Queue'}</span>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 animate-slide-up">
+          <div className="stat-card group">
+            <div className="stat-card-icon bg-accent/10 mb-3">
+              <Car className="h-6 w-6 text-accent" />
             </div>
-            <p className="text-2xl sm:text-4xl font-bold text-foreground leading-none">{waitingCount}</p>
-            <p className="text-[10px] sm:text-sm text-muted-foreground font-medium mt-1">{t('inQueue') || 'In Queue'}</p>
+            <p className="text-3xl sm:text-4xl font-bold text-foreground">{waitingCount}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-1">{t('inQueue') || 'In Your Queue'}</p>
           </div>
-          <div className="stat-card group p-4 sm:p-6">
-            <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="stat-card-icon bg-success/10 h-10 w-10 sm:h-12 sm:w-12">
-                <Send className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
-              </div>
-              <span className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider">{t('today') || 'Today'}</span>
+          <div className="stat-card group">
+            <div className="stat-card-icon bg-success/10 mb-3">
+              <Send className="h-6 w-6 text-success" />
             </div>
-            <p className="text-2xl sm:text-4xl font-bold text-foreground leading-none">{dispatchedToday}</p>
-            <p className="text-[10px] sm:text-sm text-muted-foreground font-medium mt-1">{t('dispatched') || 'Dispatched'}</p>
+            <p className="text-3xl sm:text-4xl font-bold text-foreground">{dispatchedToday}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-1">{t('dispatchedToday') || 'Dispatched Today'}</p>
           </div>
         </div>
-        {/* Action Bar - Mobile Optimized */}
-        <div className="flex items-center justify-between gap-3 mb-4 sm:mb-5 animate-slide-up" style={{ animationDelay: '100ms' }}>
-          <h2 className="text-lg sm:text-2xl font-bold tracking-tight">{t('yourQueue') || 'Taxi Queue'}</h2>
+
+        {/* Action Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 animate-slide-up" style={{ animationDelay: '100ms' }}>
+          <h2 className="section-title">{t('yourQueue') || 'Your Taxi Queue'}</h2>
           <div className="hidden sm:flex gap-3">
             <Button onClick={() => setIsAddModalOpen(true)} variant="outline" className="rounded-xl h-11 gap-2">
               <Plus className="h-4 w-4" />
@@ -272,6 +264,7 @@ const [selectedTaxi, setSelectedTaxi] = useState<string>('');
             </Button>
           </div>
         </div>
+
         {/* Queue Table */}
         <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
           <QueueTableEnhanced
@@ -281,68 +274,40 @@ const [selectedTaxi, setSelectedTaxi] = useState<string>('');
             isLoading={isLoading}
           />
         </div>
-        {/* Today's Log - Mobile Optimized */}
+
+        {/* Today's Log */}
         {dispatchLogs.length > 0 && (
-          <div className="mt-6 sm:mt-8 animate-fade-in" style={{ animationDelay: '200ms' }}>
-            <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
-              <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
-                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                <span className="truncate">{t('yourDispatchesToday') || "Today's Dispatches"}</span>
-                <Badge variant="secondary" className="text-[10px] sm:text-xs">{dispatchLogs.length}</Badge>
+          <div className="mt-8 animate-fade-in" style={{ animationDelay: '200ms' }}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                {t('yourDispatchesToday') || "Your Dispatches Today"}
               </h3>
-              <Button onClick={exportTodaysLogToCSV} variant="ghost" size="sm" className="rounded-lg gap-1.5 text-xs h-8 px-2 sm:px-3 shrink-0">
-                <Download className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{t('exportCSV') || 'Export'}</span>
+              <Button onClick={exportTodaysLogToCSV} variant="outline" size="sm" className="rounded-xl gap-2 w-full sm:w-auto">
+                <Download className="h-4 w-4" />
+                {t('exportCSV') || 'Export CSV'}
               </Button>
             </div>
-           
-            {/* Mobile Card View */}
-            <div className="sm:hidden space-y-2">
-              {dispatchLogs.slice(0, 8).map((log, i) => (
-                <div
-                  key={[log.id](http://log.id)}
-                  className="bg-card rounded-xl border p-3 flex items-center justify-between gap-3 animate-fade-in"
-                  style={{ animationDelay: `${i * 40}ms` }}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-9 w-9 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
-                      <Send className="h-4 w-4 text-success" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-sm truncate">{log.queue_entry?.plate_number}</p>
-                      <p className="text-[11px] text-muted-foreground truncate">{log.queue_entry?.driver_name}</p>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <Badge variant="secondary" className="text-[10px] mb-0.5">{log.fermata?.code}</Badge>
-                    <p className="text-[11px] text-muted-foreground">
-                      {new Date(log.dispatched_at).toLocaleTimeString('am-ET', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {/* Desktop Table View */}
-            <div className="hidden sm:block premium-card overflow-hidden">
+            <div className="premium-card overflow-hidden">
               <div className="overflow-x-auto scrollbar-hide">
                 <table className="w-full">
                   <thead className="bg-muted/50 border-b">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('plate') || 'Plate'}</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('driver') || 'Driver'}</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('destination') || 'Dest.'}</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('time') || 'Time'}</th>
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('plate') || 'Plate'}</th>
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden sm:table-cell">{t('driver') || 'Driver'}</th>
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('destination') || 'Dest.'}</th>
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('time') || 'Time'}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/50">
                     {dispatchLogs.slice(0, 10).map((log, i) => (
-                      <tr key={[log.id](http://log.id)} className="hover:bg-muted/30 transition-colors animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
-                        <td className="px-4 py-3 font-semibold text-sm">{log.queue_entry?.plate_number}</td>
-                        <td className="px-4 py-3 text-sm">{log.queue_entry?.driver_name}</td>
-                        <td className="px-4 py-3 text-sm">
+                      <tr key={log.id} className="hover:bg-muted/30 transition-colors animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
+                        <td className="px-3 sm:px-4 py-3 font-semibold text-sm">{log.queue_entry?.plate_number}</td>
+                        <td className="px-3 sm:px-4 py-3 text-sm hidden sm:table-cell">{log.queue_entry?.driver_name}</td>
+                        <td className="px-3 sm:px-4 py-3 text-sm">
                           <Badge variant="secondary" className="text-xs">{log.fermata?.code}</Badge>
                         </td>
-                        <td className="px-4 py-3 text-sm text-muted-foreground">
+                        <td className="px-3 sm:px-4 py-3 text-sm text-muted-foreground">
                           {new Date(log.dispatched_at).toLocaleTimeString('am-ET', { hour: '2-digit', minute: '2-digit' })}
                         </td>
                       </tr>
@@ -354,32 +319,29 @@ const [selectedTaxi, setSelectedTaxi] = useState<string>('');
           </div>
         )}
       </main>
-      {/* Mobile Bottom Action Bar - Enhanced */}
-      <div className="mobile-bottom-nav sm:hidden z-50">
-        <div className="flex gap-2.5">
-          <Button
-            onClick={() => setIsAddModalOpen(true)}
-            variant="outline"
-            className="flex-1 h-[52px] rounded-xl gap-2 text-sm font-semibold border-2 active:scale-[0.98] transition-transform"
+
+      {/* Mobile Bottom Action Bar */}
+      <div className="mobile-bottom-nav sm:hidden">
+        <div className="flex gap-3">
+          <Button 
+            onClick={() => setIsAddModalOpen(true)} 
+            variant="outline" 
+            className="flex-1 h-12 rounded-xl gap-2 text-sm font-medium"
           >
             <Plus className="h-5 w-5" />
-            <span>{t('add') || 'Add'}</span>
+            {t('add') || 'Add'}
           </Button>
           <Button
             onClick={handleDispatchNext}
             disabled={!nextDispatchableTaxi || isLoading}
-            className="flex-[1.5] h-[52px] rounded-xl gap-2 text-sm font-semibold shadow-lg shadow-primary/30 active:scale-[0.98] transition-transform disabled:shadow-none"
+            className="flex-1 h-12 rounded-xl gap-2 text-sm font-medium shadow-lg shadow-primary/25"
           >
             <Send className="h-5 w-5" />
-            <span>{t('dispatch') || 'Dispatch'}</span>
-            {nextDispatchableTaxi && (
-              <Badge className="ml-1 bg-primary-foreground/20 text-primary-foreground text-[10px] px-1.5">
-                #{nextDispatchableTaxi.queue_number}
-              </Badge>
-            )}
+            {t('dispatch') || 'Dispatch'}
           </Button>
         </div>
       </div>
+
       {/* Add to Queue Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="sm:max-w-md mx-4 rounded-2xl">
@@ -393,7 +355,7 @@ const [selectedTaxi, setSelectedTaxi] = useState<string>('');
                 id="plate"
                 placeholder="TX-1234"
                 value={plateNumber}
-                onChange={(e) => setPlateNumber([e.target](http://e.target).value)}
+                onChange={(e) => setPlateNumber(e.target.value)}
                 autoFocus
                 className="modern-input"
               />
@@ -404,7 +366,7 @@ const [selectedTaxi, setSelectedTaxi] = useState<string>('');
                 id="driver"
                 placeholder={t('fullName') || 'Full name'}
                 value={driverName}
-                onChange={(e) => setDriverName([e.target](http://e.target).value)}
+                onChange={(e) => setDriverName(e.target.value)}
                 className="modern-input"
               />
             </div>
