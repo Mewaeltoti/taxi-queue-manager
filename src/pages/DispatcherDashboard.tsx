@@ -143,10 +143,11 @@ const DispatcherDashboard = () => {
         .from('queue_entries')
         .update({ status: 'dispatched', dispatched_at: dispatchedAt, updated_at: dispatchedAt })
         .eq('id', nextDispatchableTaxi.id),
-      supabase.from('dispatch_logs').insert({
-        queue_entry_id: nextDispatchableTaxi.id,
-        fermata_id: primaryFermata.id,
-        dispatched_at: dispatchedAt,
+      supabase.from('dispatch_logs')
+.select('*, queue_entry(id, queue_number, plate_number, driver_name, arrival_time, status, dispatched_at), fermata:fermata_id(code, name)')
+.eq('dispatcher_id', user.id)  // ← Filter on main table
+.gte('dispatched_at', today + 'T00:00:00')
+.order('dispatched_at', { ascending: false });
       })
     ]);
 
