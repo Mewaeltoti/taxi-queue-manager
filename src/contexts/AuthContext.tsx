@@ -74,21 +74,24 @@ const login = async (email: string, password: string): Promise<boolean> => {
   try {
     const response = await fetch('https://jbryrzuskgbfzvynbwpn.supabase.co/functions/v1/smooth-processor', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email: email.trim(), password }),
     });
 
     const result = await response.json();
 
     if (result.success && result.user) {
       setUser(result.user);
+      toast.success('Welcome back!');
       return true;
     } else {
       toast.error('Invalid email or password');
       return false;
     }
   } catch (err) {
-    toast.error('Login failed');
+    toast.error('Login failed — check internet');
     console.error(err);
     return false;
   } finally {
