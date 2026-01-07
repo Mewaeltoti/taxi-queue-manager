@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import bcrypt from 'bcryptjs';
 import { toast } from 'sonner';
 import { useLanguage } from './LanguageContext';
+
 interface User {
   id: string;
   email?: string;
@@ -25,11 +25,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const {t} = useLanguage();
+  const { t } = useLanguage();
+
+  // Load user profile from your custom `users` table
   const loadUserProfile = async (uid: string) => {
     const { data, error } = await supabase
       .from('users')
-      .select('id, email, name, role, assigned_fermata_ids')
+      .select('id, email, name, role, assigned_fermata_ids') // ← NO password!
       .eq('id', uid)
       .maybeSingle();
 
@@ -45,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   };
 
+  // Listen to Supabase Auth state (optional if you use Supabase Auth)
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
@@ -67,28 +70,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  // Custom login using your own users table
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-  
-    const { data: userData, error } = await supabase
+
+    // 1. Find user + password hash
+    const { data: userData, error: fetchError } = await supabase
       .from('users')
       .select('id, email, name, role, assigned_fermata_ids, password')
       .eq('email', email.trim())
       .single();
-  
-    if (error || !userData) {
-      toast.error('Invalid email or password');
+
+    if (fetchError || !userData) {
+      toast.error(t('invalidCredentials') || 'Invalid email or password');
       setIsLoading(false);
       return false;
     }
-  
-    // Simple plain text comparison (for development)
+
+    // 2. Compare password (plain text for now — change to bcrypt later)
     if (userData.password !== password) {
-      toast.error('Invalid email or password');
+      toast.error(t('invalidCredentials') || 'Invalid email or password');
       setIsLoading(false);
       return false;
     }
-  
+
+    // 3. Success — set user (without password!)
     setUser({
       id: userData.id,
       email: userData.email,
@@ -96,24 +102,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: userData.role,
       assigned_fermata_ids: userData.assigned_fermata_ids || [],
     });
-  
+
     setIsLoading(false);
     return true;
   };
+
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      isLoading,
-      login,
-      logout,
-      isAdmin: user?.role === 'admin',
-      isDispatcher: user?.role === 'dispatcher',
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        login,
+        logout,
+        isAdmin: user?.role === 'admin',
+        isDispatcher: user?.role === 'dispatcher',
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -121,6 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
   return context;
 }
