@@ -27,11 +27,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const { t } = useLanguage();
 
-  // Load user profile from your custom `users` table
   const loadUserProfile = async (uid: string) => {
     const { data, error } = await supabase
       .from('users')
-      .select('id, email, name, role, assigned_fermata_ids') // ← NO password!
+      .select('id, email, name, role, assigned_fermata_ids')
       .eq('id', uid)
       .maybeSingle();
 
@@ -47,7 +46,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   };
 
-  // Listen to Supabase Auth state (optional if you use Supabase Auth)
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
@@ -70,39 +68,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // Custom login using your own users table
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
 
-    // 1. Find user + password hash
-    const { data: userData, error: fetchError } = await supabase
+    // Get user profile (without password)
+    const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('id, email, name, role, assigned_fermata_ids, password')
+      .select('id, email, name, role, assigned_fermata_ids')
       .eq('email', email.trim())
       .single();
 
-    if (fetchError || !userData) {
+    if (userError || !userData) {
       toast.error(t('invalidCredentials') || 'Invalid email or password');
       setIsLoading(false);
       return false;
     }
 
-    // 2. Compare password (plain text for now — change to bcrypt later)
-    if (userData.password !== password) {
+    // Get password separately
+    const { data: pwdData, error: pwdError } = await supabase
+      .from('users')
+      .select('password')
+      .eq('id', userData.id)
+      .single();
+
+    if (pwdError || !pwdData?.password || pwdData.password !== password) {
       toast.error(t('invalidCredentials') || 'Invalid email or password');
       setIsLoading(false);
       return false;
     }
 
-    // 3. Success — set user (without password!)
-    setUser({
-      id: userData.id,
-      email: userData.email,
-      name: userData.name,
-      role: userData.role,
-      assigned_fermata_ids: userData.assigned_fermata_ids || [],
-    });
-
+    // Success — set user
+    setUser(userData);
     setIsLoading(false);
     return true;
   };
