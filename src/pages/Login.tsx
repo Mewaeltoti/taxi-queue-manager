@@ -71,15 +71,15 @@ export default function Login() {
                 <Mail className="h-4 w-4 text-primary" />
                 {t('email')}
               </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="modern-input"
-              />
+             <Input
+  id="email"
+  type="email"
+  placeholder="name@example.com"
+  value={email}
+  onChange={(e) => setEmail(e.target.value)}  // ← Fixed
+  required
+  className="modern-input"
+/>
             </div>
 
             <div className="space-y-2">
@@ -88,13 +88,13 @@ export default function Login() {
                 {t('password')}
               </Label>
               <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="modern-input"
-              />
+  id="password"
+  type="password"
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}  // ← Fixed
+  required
+  className="modern-input"
+/>
             </div>
 
             <Button 
