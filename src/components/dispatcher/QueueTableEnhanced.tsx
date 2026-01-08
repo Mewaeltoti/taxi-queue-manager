@@ -25,6 +25,7 @@ interface QueueTableEnhancedProps {
 const statusColors: Record<QueueStatus, string> = {
   waiting: 'bg-queue-waiting',
   dispatched: 'bg-queue-dispatched text-muted-foreground',
+  skipped: 'bg-warning/10 border-l-4 border-l-warning',
   not_ready: 'bg-destructive/10 border-l-4 border-l-destructive',
   returned: 'bg-primary/10 border-l-4 border-l-primary',
   canceled: 'bg-muted text-muted-foreground line-through',
@@ -33,7 +34,8 @@ const statusColors: Record<QueueStatus, string> = {
 const statusBadgeVariants: Record<QueueStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   waiting: 'secondary',
   dispatched: 'default',
-   not_ready: 'destructive',
+  skipped: 'outline',
+  not_ready: 'destructive',
   returned: 'secondary',
   canceled: 'outline',
 };

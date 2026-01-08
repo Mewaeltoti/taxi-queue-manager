@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Send, Car, Download, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,53 +30,117 @@ const DispatcherDashboard = () => {
   const [plateNumber, setPlateNumber] = useState('');
   const [driverName, setDriverName] = useState('');
 
-  const primaryFermata = fermatas.find(f => user?.assigned_fermata_ids?.includes(f.id));
+  const assignedFermataIds = user?.assigned_fermata_ids || [];
+  const primaryFermata = fermatas.find(f => assignedFermataIds.includes(f.id));
 
+  const loadQueueEntries = useCallback(async () => {
+    if (!assignedFermataIds.length) return;
+    
+    const { data, error } = await supabase
+      .from('queue_entries')
+      .select(`
+        *,
+        taxis!inner(id, plate_number, drivers(id, name)),
+        fermatas(id, code, name)
+      `)
+      .in('fermata_id', assignedFermataIds)
+      .in('status', ['waiting', 'not_ready', 'returned', 'skipped'])
+      .order('queue_number', { ascending: true });
+
+    if (error) {
+      console.error('Error loading queue:', error);
+      return;
+    }
+
+    // Map to flat structure for display
+    const mapped = (data || []).map((e: any) => ({
+      ...e,
+      plate_number: e.taxis?.plate_number,
+      driver_name: e.taxis?.drivers?.name,
+      taxi: e.taxis,
+      fermata: e.fermatas,
+    }));
+
+    setQueueEntries(mapped);
+  }, [assignedFermataIds]);
+
+  const loadDispatchLogs = useCallback(async () => {
+    if (!assignedFermataIds.length) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    
+    const { data, error } = await supabase
+      .from('dispatch_logs')
+      .select(`
+        *,
+        taxis(id, plate_number, drivers(id, name)),
+        fermatas(id, code, name)
+      `)
+      .in('fermata_id', assignedFermataIds)
+      .gte('dispatched_at', today)
+      .order('dispatched_at', { ascending: false });
+
+    if (error) {
+      console.error('Error loading dispatch logs:', error);
+      return;
+    }
+
+    const mapped = (data || []).map((l: any) => ({
+      ...l,
+      queue_entry: {
+        plate_number: l.taxis?.plate_number,
+        driver_name: l.taxis?.drivers?.name,
+      },
+      fermata: l.fermatas,
+    }));
+
+    setDispatchLogs(mapped);
+  }, [assignedFermataIds]);
+
+  const loadFermatas = useCallback(async () => {
+    const { data } = await supabase.from('fermatas').select('*');
+    setFermatas(data ?? []);
+  }, []);
+
+  // Initial load
   useEffect(() => {
     if (!user) return;
+    
+    setIsLoading(true);
+    Promise.all([loadQueueEntries(), loadDispatchLogs(), loadFermatas()])
+      .finally(() => setIsLoading(false));
+  }, [user, loadQueueEntries, loadDispatchLogs, loadFermatas]);
 
-    const loadData = async () => {
-      setIsLoading(true);
-
-      const [{ data: queue }, { data: logs }, { data: ferm }] = await Promise.all([
-        supabase
-          .from('queue_entries')
-          .select('*')
-          .eq('dispatcher_id', user.id)
-          .order('queue_number', { ascending: true }),
-        supabase
-          .from('dispatch_logs')
-          .select('*, queue_entry!inner(id, queue_number, plate_number, driver_name, arrival_time, status, dispatched_at), fermata:fermata_id(code, name)')
-          .eq('queue_entry.dispatcher_id', user.id)
-          .gte('dispatched_at', new Date().toISOString().split('T')[0])
-          .order('dispatched_at', { ascending: false }),
-        supabase.from('fermatas').select('*')
-      ]);
-
-      setQueueEntries(queue ?? []);
-      setDispatchLogs(logs ?? []);
-      setFermatas(ferm ?? []);
-      setIsLoading(false);
-    };
-
-    loadData();
+  // Real-time subscription - listen to ALL queue changes, then refetch
+  useEffect(() => {
+    if (!user || !assignedFermataIds.length) return;
 
     const channel = supabase
-      .channel('dispatcher-' + user.id)
+      .channel('queue-realtime-' + user.id)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'queue_entries', filter: `dispatcher_id=eq.${user.id}` },
-        loadData
+        { event: '*', schema: 'public', table: 'queue_entries' },
+        (payload) => {
+          console.log('Queue change detected:', payload);
+          loadQueueEntries();
+        }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'dispatch_logs' },
-        loadData
+        (payload) => {
+          console.log('Dispatch log change:', payload);
+          loadDispatchLogs();
+        }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+      });
 
-    return () => void supabase.removeChannel(channel);
-  }, [user]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, assignedFermataIds, loadQueueEntries, loadDispatchLogs]);
 
   const activeEntries = useMemo(() =>
     queueEntries.filter(e => ['waiting', 'not_ready', 'returned'].includes(e.status)),
@@ -88,61 +152,112 @@ const DispatcherDashboard = () => {
   const dispatchedToday = dispatchLogs.length;
 
   const handleAddToQueue = async () => {
-  if (!plateNumber.trim() || !driverName.trim()) {
-    toast.error('Please enter plate and driver name');
-    return;
-  }
+    if (!plateNumber.trim() || !driverName.trim()) {
+      toast.error('Please enter plate and driver name');
+      return;
+    }
 
-  if (!primaryFermata) {
-    toast.error('No destination assigned');
-    return;
-  }
+    if (!primaryFermata) {
+      toast.error('No destination assigned');
+      return;
+    }
 
-  const normalizedPlate = plateNumber.trim().toUpperCase();
-  const newQueueNumber = activeEntries.length + 1;
+    const normalizedPlate = plateNumber.trim().toUpperCase();
+    const trimmedDriver = driverName.trim();
 
-  // 1. Add to screen IMMEDIATELY (optimistic update)
-  const tempId = 'temp-' + Date.now();
-  const newEntry = {
-    id: tempId,
-    queue_number: newQueueNumber,
-    plate_number: normalizedPlate,
-    driver_name: driverName.trim(),
-    arrival_time: new Date().toISOString(),
-    status: 'waiting',
-    fermata_id: primaryFermata.id,
-    dispatcher_id: user.id,
+    setIsLoading(true);
+    setPlateNumber('');
+    setDriverName('');
+    setIsAddModalOpen(false);
+
+    try {
+      // 1. Check if taxi exists, or create it with driver
+      let { data: existingTaxi } = await supabase
+        .from('taxis')
+        .select('id, driver_id')
+        .eq('plate_number', normalizedPlate)
+        .maybeSingle();
+
+      let taxiId = existingTaxi?.id;
+
+      if (!existingTaxi) {
+        // Create driver first
+        const { data: newDriver, error: driverError } = await supabase
+          .from('drivers')
+          .insert({ name: trimmedDriver })
+          .select('id')
+          .single();
+
+        if (driverError) {
+          toast.error('Failed to create driver');
+          setIsLoading(false);
+          return;
+        }
+
+        // Create taxi
+        const { data: newTaxi, error: taxiError } = await supabase
+          .from('taxis')
+          .insert({ 
+            plate_number: normalizedPlate, 
+            driver_id: newDriver.id,
+            type: 'sedan'
+          })
+          .select('id')
+          .single();
+
+        if (taxiError) {
+          toast.error('Failed to create taxi');
+          setIsLoading(false);
+          return;
+        }
+
+        taxiId = newTaxi.id;
+      }
+
+      // 2. Check if taxi is already in active queue
+      const { data: existingEntry } = await supabase
+        .from('queue_entries')
+        .select('id')
+        .eq('taxi_id', taxiId)
+        .in('status', ['waiting', 'not_ready', 'returned', 'skipped'])
+        .maybeSingle();
+
+      if (existingEntry) {
+        toast.error('This taxi is already in the queue');
+        setIsLoading(false);
+        return;
+      }
+
+      // 3. Get next queue number
+      const { data: queueNum } = await supabase.rpc('get_next_queue_number', {
+        _fermata_id: primaryFermata.id
+      });
+
+      // 4. Add to queue
+      const { error: queueError } = await supabase
+        .from('queue_entries')
+        .insert({
+          taxi_id: taxiId,
+          fermata_id: primaryFermata.id,
+          dispatcher_id: user?.id,
+          queue_number: queueNum || 1,
+          status: 'waiting',
+          arrival_time: new Date().toISOString(),
+        });
+
+      if (queueError) {
+        toast.error('Failed to add to queue: ' + queueError.message);
+        console.error(queueError);
+      } else {
+        toast.success(`${normalizedPlate} added to queue!`);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Something went wrong');
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-  setQueueEntries(prev => [...prev, newEntry]);
-  toast.success(`${normalizedPlate} added!`);
-
-  setPlateNumber('');
-  setDriverName('');
-  setIsAddModalOpen(false);
-
-  // 2. Save to Supabase (fire and forget — real-time will sync)
-  const { error } = await supabase
-    .from('queue_entries')
-    .insert({
-      queue_number: newQueueNumber,
-      plate_number: normalizedPlate,
-      driver_name: driverName.trim(),
-      arrival_time: new Date().toISOString(),
-      status: 'waiting',
-      fermata_id: primaryFermata.id,
-      dispatcher_id: user.id,
-      updated_at: new Date().toISOString(),
-    });
-
-  if (error) {
-    toast.error('Sync failed — refresh to see');
-    console.error(error);
-    // Remove optimistic entry if failed
-    setQueueEntries(prev => prev.filter(e => e.id !== tempId));
-  }
-  // Real-time subscription will replace temp entry with real one
-};
 
   const handleDispatchNext = async () => {
     if (!nextDispatchableTaxi) {
@@ -158,21 +273,28 @@ const DispatcherDashboard = () => {
     setIsLoading(true);
     const dispatchedAt = new Date().toISOString();
 
-    await Promise.all([
-      supabase
-        .from('queue_entries')
-        .update({ status: 'dispatched', dispatched_at: dispatchedAt, updated_at: dispatchedAt })
-        .eq('id', nextDispatchableTaxi.id),
-      supabase.from('dispatch_logs').insert({
-  queue_entry_id: nextDispatchableTaxi.id,
-  fermata_id: primaryFermata.id,
-  dispatcher_id: user.id,  // ← Add this
-  dispatched_at: dispatchedAt,
-      })
-    ]);
+    try {
+      await Promise.all([
+        supabase
+          .from('queue_entries')
+          .update({ status: 'dispatched', dispatched_at: dispatchedAt, updated_at: dispatchedAt })
+          .eq('id', nextDispatchableTaxi.id),
+        supabase.from('dispatch_logs').insert({
+          queue_entry_id: nextDispatchableTaxi.id,
+          taxi_id: nextDispatchableTaxi.taxi_id,
+          fermata_id: primaryFermata.id,
+          dispatcher_id: user?.id,
+          dispatched_at: dispatchedAt,
+        })
+      ]);
 
-    toast.success(`${nextDispatchableTaxi.plate_number} dispatched!`);
-    setIsLoading(false);
+      toast.success(`${nextDispatchableTaxi.plate_number} dispatched!`);
+    } catch (err) {
+      console.error(err);
+      toast.error('Dispatch failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleStatusChange = async (entryId: string, status: 'not_ready' | 'returned' | 'canceled' | 'waiting') => {
