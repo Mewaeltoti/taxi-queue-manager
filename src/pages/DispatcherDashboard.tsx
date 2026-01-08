@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Plus, Send, Car, Download, FileText } from 'lucide-react';
+import { Plus, Send, Car, Download, FileText, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
 
 const DispatcherDashboard = () => {
   const { user } = useAuth();
@@ -69,12 +70,20 @@ const DispatcherDashboard = () => {
 
     const today = new Date().toISOString().split('T')[0];
     
+    // Use explicit foreign key name to avoid schema cache issues
     const { data, error } = await supabase
       .from('dispatch_logs')
       .select(`
         *,
-        taxis(id, plate_number, drivers(id, name)),
-        fermatas(id, code, name)
+        fermatas!dispatch_logs_fermata_id_fkey(id, code, name),
+        queue_entries!dispatch_logs_queue_entry_id_fkey(
+          id,
+          taxis!queue_entries_taxi_id_fkey(
+            id, 
+            plate_number,
+            drivers!taxis_driver_id_fkey(id, name)
+          )
+        )
       `)
       .in('fermata_id', assignedFermataIds)
       .gte('dispatched_at', today)
@@ -88,8 +97,8 @@ const DispatcherDashboard = () => {
     const mapped = (data || []).map((l: any) => ({
       ...l,
       queue_entry: {
-        plate_number: l.taxis?.plate_number,
-        driver_name: l.taxis?.drivers?.name,
+        plate_number: l.queue_entries?.taxis?.plate_number,
+        driver_name: l.queue_entries?.taxis?.drivers?.name,
       },
       fermata: l.fermatas,
     }));
@@ -368,7 +377,22 @@ const DispatcherDashboard = () => {
 
         {/* Action Bar */}
         <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-          <h2 className="text-2xl font-bold">Your Taxi Queue</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold">Your Taxi Queue</h2>
+            <Button 
+              onClick={() => {
+                loadQueueEntries();
+                loadDispatchLogs();
+                toast.success('Refreshed');
+              }} 
+              variant="ghost" 
+              size="icon"
+              className="h-8 w-8"
+              disabled={isLoading}
+            >
+              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+            </Button>
+          </div>
           <div className="flex gap-3">
             <Button onClick={() => setIsAddModalOpen(true)} variant="outline">
               <Plus className="h-4 w-4 mr-2" />
