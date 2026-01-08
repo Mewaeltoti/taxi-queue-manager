@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Send, Car, Download, FileText, AlertCircle } from 'lucide-react';
+import { Plus, Send, Car, Download, FileText, RefreshCw,AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -263,6 +263,16 @@ const DispatcherDashboard = () => {
             <Plus className="h-6 w-6 mr-3" />
             Add Taxi
           </Button>
+          <Button
+      variant="outline"
+      size="sm"
+      onClick={loadData}
+      disabled={isLoading}
+      className="gap-2"
+    >
+      <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+      Refresh
+    </Button>
         </div>
 
         {/* Full Queue Table */}
