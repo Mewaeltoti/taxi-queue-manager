@@ -91,58 +91,58 @@ const DispatcherDashboard = () => {
   const nextDispatchableTaxi = activeEntries.find(e => e.status === 'waiting' || e.status === 'returned');
   const dispatchedToday = dispatchLogs.length;
 
-  const handleAddToQueue = async () => {
-    if (!plateNumber.trim() || !driverName.trim()) {
-      toast.error('Please enter plate and driver name');
-      return;
-    }
+ const handleAddToQueue = async () => {
+  if (!plateNumber.trim() || !driverName.trim()) {
+    toast.error('Please enter plate and driver name');
+    return;
+  }
 
-    if (!primaryFermata) {
-      toast.error('No destination assigned');
-      return;
-    }
+  if (!primaryFermata) {
+    toast.error('No destination assigned');
+    return;
+  }
 
-    const normalizedPlate = plateNumber.trim().toUpperCase();
-    const newQueueNumber = activeEntries.length + 1;
+  const normalizedPlate = plateNumber.trim().toUpperCase();
+  const newQueueNumber = activeEntries.length + 1;
 
-    // Optimistic update — show immediately
-    const tempId = 'temp-' + Date.now();
-    const optimisticEntry = {
-      id: tempId,
+  // Optimistic update — show instantly
+  const tempId = 'temp-' + Date.now();
+  const optimisticEntry = {
+    id: tempId,
+    queue_number: newQueueNumber,
+    plate_number: normalizedPlate,
+    driver_name: driverName.trim(),
+    arrival_time: new Date().toISOString(),
+    status: 'waiting',
+  };
+
+  setQueueEntries(prev => [...prev, optimisticEntry]);
+  toast.success(`${normalizedPlate} added!`);
+
+  setPlateNumber('');
+  setDriverName('');
+  setIsAddModalOpen(false);
+
+  // Save to Supabase — simple fields only
+  const { error } = await supabase
+    .from('queue_entries')
+    .insert({
       queue_number: newQueueNumber,
       plate_number: normalizedPlate,
       driver_name: driverName.trim(),
       arrival_time: new Date().toISOString(),
       status: 'waiting',
-    };
+      fermata_id: primaryFermata.id,
+      dispatcher_id: user.id,
+      updated_at: new Date().toISOString(),
+    });
 
-    setQueueEntries(prev => [...prev, optimisticEntry]);
-    toast.success(`${normalizedPlate} added!`);
-
-    setPlateNumber('');
-    setDriverName('');
-    setIsAddModalOpen(false);
-
-    // Save to Supabase
-    const { error } = await supabase
-      .from('queue_entries')
-      .insert({
-        queue_number: newQueueNumber,
-        plate_number: normalizedPlate,
-        driver_name: driverName.trim(),
-        arrival_time: new Date().toISOString(),
-        status: 'waiting',
-        fermata_id: primaryFermata.id,
-        dispatcher_id: user.id,
-        updated_at: new Date().toISOString(),
-      });
-
-    if (error) {
-      toast.error('Sync failed');
-      console.error(error);
-      setQueueEntries(prev => prev.filter(e => e.id !== tempId));
-    }
-  };
+  if (error) {
+    toast.error('Failed to add');
+    console.error(error);
+    setQueueEntries(prev => prev.filter(e => e.id !== tempId));
+  }
+};
 
   const handleDispatchNext = async () => {
     if (!nextDispatchableTaxi) {
