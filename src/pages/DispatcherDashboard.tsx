@@ -39,31 +39,32 @@ const DispatcherDashboard = () => {
     if (!user) return;
 
     const loadData = async () => {
-      setIsLoading(true);
+  setIsLoading(true);
 
-      const [{ data: queue }, { data: logs }, { data: ferm }] = await Promise.all([
-        supabase
-          .from('queue_entries')
-          .select('*')
-          .eq('dispatcher_id', user.id)
-          .order('queue_number', { ascending: true }),
-        supabase
-          .from('dispatch_logs')
-          .select('*, queue_entry(id, queue_number, plate_number, driver_name, arrival_time, status, dispatched_at), fermata:fermata_id(code, name)')
-          .order('dispatched_at', { ascending: false }),
-        supabase.from('fermatas').select('*')
-      ]);
+  const today = new Date().toISOString().split('T')[0];
 
-      // Filter logs for this dispatcher in code (avoids 400 error)
-      const filteredLogs = logs?.filter(log => log.queue_entry?.dispatcher_id === user.id) || [];
+  const [{ data: queue }, { data: logs }, { data: ferm }] = await Promise.all([
+    supabase
+      .from('queue_entries')
+      .select('*')
+      .eq('dispatcher_id', user.id)
+      .order('queue_number', { ascending: true }),
+    supabase
+      .from('dispatch_logs')
+      .select('*, queue_entry(id, queue_number, plate_number, driver_name, arrival_time, status, dispatched_at), fermata:fermata_id(code, name)')
+      .gte('dispatched_at', today)
+      .order('dispatched_at', { ascending: false }),
+    supabase.from('fermatas').select('*')
+  ]);
 
-      setQueueEntries(queue ?? []);
-      setDispatchLogs(filteredLogs);
-      setFermatas(ferm ?? []);
-      setIsLoading(false);
-    };
+  // Filter logs for this dispatcher in code (safe way)
+  const filteredLogs = logs?.filter(log => log.queue_entry?.dispatcher_id === user.id) || [];
 
-    loadData();
+  setQueueEntries(queue ?? []);
+  setDispatchLogs(filteredLogs);
+  setFermatas(ferm ?? []);
+  setIsLoading(false);
+};
 
     const channel = supabase
       .channel('dispatcher-' + user.id)
