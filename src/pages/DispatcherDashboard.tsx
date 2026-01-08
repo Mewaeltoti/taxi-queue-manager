@@ -10,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import { QueueTableEnhanced } from '@/components/dispatcher/QueueTableEnhanced';
 import { toast } from 'sonner';
@@ -19,7 +18,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const DispatcherDashboard = () => {
-  const { user } from useAuth();
+  const { user } = useAuth();
   const { t } = useLanguage();
 
   const [queueEntries, setQueueEntries] = useState<any[]>([]);
@@ -31,17 +30,13 @@ const DispatcherDashboard = () => {
   const [plateNumber, setPlateNumber] = useState('');
   const [driverName, setDriverName] = useState('');
 
-  const assignedFermatas = fermatas.filter(f => user?.assigned_fermata_ids?.includes(f.id));
-  const primaryFermata = assignedFermatas[0];
+  const primaryFermata = fermatas.find(f => user?.assigned_fermata_ids?.includes(f.id));
 
-  // Load data
   useEffect(() => {
     if (!user) return;
 
     const loadData = async () => {
       setIsLoading(true);
-
-      const today = new Date().toISOString().split('T')[0];
 
       const [{ data: queue }, { data: logs }, { data: ferm }] = await Promise.all([
         supabase
@@ -51,17 +46,15 @@ const DispatcherDashboard = () => {
           .order('queue_number', { ascending: true }),
         supabase
           .from('dispatch_logs')
-          .select('*, queue_entry(id, queue_number, plate_number, driver_name, arrival_time, status, dispatched_at), fermata:fermata_id(code, name)')
-          .gte('dispatched_at', today)
+          .select('*, queue_entry!inner(id, queue_number, plate_number, driver_name, arrival_time, status, dispatched_at), fermata:fermata_id(code, name)')
+          .eq('queue_entry.dispatcher_id', user.id)
+          .gte('dispatched_at', new Date().toISOString().split('T')[0])
           .order('dispatched_at', { ascending: false }),
         supabase.from('fermatas').select('*')
       ]);
 
-      // Safe filter for logs (avoids 400 error)
-      const filteredLogs = logs?.filter(log => log.queue_entry?.dispatcher_id === user.id) || [];
-
       setQueueEntries(queue ?? []);
-      setDispatchLogs(filteredLogs);
+      setDispatchLogs(logs ?? []);
       setFermatas(ferm ?? []);
       setIsLoading(false);
     };
@@ -90,7 +83,7 @@ const DispatcherDashboard = () => {
     [queueEntries]
   );
 
-  const waitingCount = activeEntries.length;
+  const waitingCount = activeEntries.filter(e => e.status === 'waiting').length;
   const nextDispatchableTaxi = activeEntries.find(e => e.status === 'waiting' || e.status === 'returned');
   const dispatchedToday = dispatchLogs.length;
 
@@ -105,32 +98,13 @@ const DispatcherDashboard = () => {
       return;
     }
 
-    const normalizedPlate = plateNumber.trim().toUpperCase();
     const newQueueNumber = activeEntries.length + 1;
-
-    // Optimistic update — instant feedback
-    const tempId = 'temp-' + Date.now();
-    const optimisticEntry = {
-      id: tempId,
-      queue_number: newQueueNumber,
-      plate_number: normalizedPlate,
-      driver_name: driverName.trim(),
-      arrival_time: new Date().toISOString(),
-      status: 'waiting',
-    };
-
-    setQueueEntries(prev => [...prev, optimisticEntry]);
-    toast.success(`${normalizedPlate} added!`);
-
-    setPlateNumber('');
-    setDriverName('');
-    setIsAddModalOpen(false);
 
     const { error } = await supabase
       .from('queue_entries')
       .insert({
         queue_number: newQueueNumber,
-        plate_number: normalizedPlate,
+        plate_number: plateNumber.trim().toUpperCase(),
         driver_name: driverName.trim(),
         arrival_time: new Date().toISOString(),
         status: 'waiting',
@@ -140,9 +114,13 @@ const DispatcherDashboard = () => {
       });
 
     if (error) {
-      toast.error('Failed to add');
+      toast.error('Failed to add: ' + error.message);
       console.error(error);
-      setQueueEntries(prev => prev.filter(e => e.id !== tempId));
+    } else {
+      toast.success(`${plateNumber.toUpperCase()} added to queue!`);
+      setPlateNumber('');
+      setDriverName('');
+      setIsAddModalOpen(false);
     }
   };
 
@@ -223,7 +201,7 @@ const DispatcherDashboard = () => {
         <div className="mb-4">
           <p className="text-sm text-muted-foreground mb-2">Your Assigned Destination:</p>
           <div className="flex flex-wrap gap-2">
-            {assignedFermatas.map(f => (
+            {fermatas.filter(f => user?.assigned_fermata_ids?.includes(f.id)).map(f => (
               <Badge key={f.id} variant="secondary" className="px-3 py-1 text-sm">
                 {f.code} - {f.name}
               </Badge>
@@ -320,9 +298,6 @@ const DispatcherDashboard = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add Taxi to Your Queue</DialogTitle>
-            <DialogDescription>
-              Enter the plate number and driver name to add a taxi.
-            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
